@@ -1,6 +1,6 @@
 #include "process.h"
 
-Process::Process(const std::wstring& path) : pid(0) {
+Process::Process(const std::wstring& path) : _pid(0) {
   STARTUPINFOW startup_info;
   PROCESS_INFORMATION process_info;
 
@@ -27,13 +27,13 @@ Process::Process(const std::wstring& path) : pid(0) {
     // exception/error handling
   }
   else {
-    pid = static_cast<unsigned long>(process_info.dwProcessId);
+    _pid = static_cast<unsigned long>(process_info.dwProcessId);
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
   }
 }
-Process::Process(const DWORD pid) : pid(pid) { }
+Process::Process(const DWORD pid) : _pid(pid) { }
 
 DWORD Process::GetPid() const {
-  return pid;
+  return _pid;
 }

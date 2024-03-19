@@ -1,5 +1,5 @@
-#ifndef DLL_MODULE_H_
-#define DLL_MODULE_H_
+#ifndef DLLINJECTION_H_
+#define DLLINJECTION_H_
 
 #include <string>
 #include "module.h"

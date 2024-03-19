@@ -83,7 +83,7 @@ int injectIntoPID(int process, int method, const wchar_t* dll)
 	DWORD pid = (DWORD)process;
 	//Gets the process handle for the target process
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	if (OpenProcess == NULL)
+	if (hProcess == NULL)
 	{
 		puts("Could not find process");
 	}
@@ -96,15 +96,16 @@ int injectIntoPID(int process, int method, const wchar_t* dll)
 		puts("Unable to locate LoadLibraryW");
 		return -1;
 	}
+
 	//Allocates space inside for inject.dll to our target process
-	LPVOID lpSpace = (LPVOID)VirtualAllocEx(hProcess, NULL, wcslen(dll), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	LPVOID lpSpace = (LPVOID)VirtualAllocEx(hProcess, NULL, (wcslen(dll) + 1) * sizeof(wchar_t), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (lpSpace == NULL)
 	{
 		printf("Could not allocate memory in process %u", (int)process);
 		return -1;
 	}
 	//Write inject.dll to memory of process
-	int n = WriteProcessMemory(hProcess, lpSpace, dll, wcslen(dll), NULL);
+	int n = WriteProcessMemory(hProcess, lpSpace, dll, (wcslen(dll) + 1) * sizeof(wchar_t), NULL);
 	if (n == 0)
 	{
 		puts("Could not write to process's address space");
@@ -131,8 +132,6 @@ int injectIntoPID(int process, int method, const wchar_t* dll)
 		DWORD threadId = GetThreadId(hThread);
 		DWORD processId = GetProcessIdOfThread(hThread);
 		printf("Injected thread id: %u for pid: %u", threadId, processId);
-		getchar();
-		getchar();
 		getchar();
 		CloseHandle(hProcess);
 		return 0;

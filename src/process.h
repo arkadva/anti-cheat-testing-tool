@@ -12,7 +12,7 @@ public:
   DWORD GetPid() const;
 
 private:
-  DWORD pid;
+  DWORD _pid;
 };
 
 #endif

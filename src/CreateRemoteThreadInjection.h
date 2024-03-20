@@ -5,22 +5,7 @@
 #include "dllinjection.h"
 #include "utilities.h"
 
-// ========== Implementation Definitions Start ==========
-HANDLE RtlCreateUserThread(
-	HANDLE hProcess,
-	LPVOID lpBaseAddress,
-	LPVOID lpSpace
-);
-
-HANDLE NtCreateThreadEx(
-	HANDLE hProcess,
-	LPVOID lpBaseAddress,
-	LPVOID lpSpace
-);
-
 int injectIntoPID(int process, int method, const wchar_t* dll);
-// ========== Implementation Definitions End ==========
-
 
 // bitflgs for injection type
 enum RemoteThreadType {
@@ -28,7 +13,6 @@ enum RemoteThreadType {
 	kRtlCreateUserThread = 0x2,
 	kCreateRemoteThread = 0x4
 };
-
 
 class CreateRemoteThreadInjection : public DLLInjection {
 public:

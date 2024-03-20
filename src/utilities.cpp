@@ -32,7 +32,7 @@ namespace utilities {
 
     CloseHandle(snapshot);
     return process_id;
-}
+  }
 
   HANDLE GetHandleByName(const std::wstring& name, BOOL inherit_handle, DWORD desired_access) {
     return OpenProcess(GetPIDByName(name), inherit_handle, desired_access);

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string>
 
+// NOTE will crash when target(?) is compiled in Debug mode
 bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeader = true, bool ClearNonNeededSections = true, bool AdjustProtections = true, bool SEHExceptionSupport = true, DWORD fdwReason = DLL_PROCESS_ATTACH, LPVOID lpReserved = 0);
 
 using f_LoadLibraryA = HINSTANCE(WINAPI*)(const char* lpLibFilename);

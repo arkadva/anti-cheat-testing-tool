@@ -6,8 +6,8 @@
 #include "cheatmanager.h"
 
 int main() {
-  int write_buffer = 1000;
-  int read_buffer = - 1;
+  ULONG write_buffer = 1000;
+  ULONG read_buffer = -1;
 
   const std::wstring dll_name = L"dll1-dbg.dll";
   const std::wstring process_name = L"proc1-dbg.exe";
@@ -16,8 +16,8 @@ int main() {
 
   Module* manual_mapping = new ManualMapping(dll_name);
   Module* crtj = new CreateRemoteThreadInjection(dll_name, RemoteThreadType::kRtlCreateUserThread);
-  Module* write_memory = new WriteMemory(0x000000000014FD14, &write_buffer, sizeof(int), WriteMemoryType::kNtWriteVirtualMemory);
-  Module* read_memory = new ReadMemory(0x000000000014FD14, &write_buffer, sizeof(int), ReadMemoryType::kReadProcessMemory);
+  Module* write_memory = new WriteMemory(0x000000000014FED0, &write_buffer, sizeof(int), WriteMemoryType::kNtWriteVirtualMemory);
+  Module* read_memory = new ReadMemory(0x000000000014FED0, &read_buffer, sizeof(int), ReadMemoryType::kReadProcessMemory);
 
   std::vector<Module*> attacks = { 
     //manual_mapping,
@@ -26,11 +26,12 @@ int main() {
     read_memory
   };
 
+  getchar();
+
   CheatManager* cheatManager = new CheatManager(process, &attacks);
   cheatManager->execute();
 
   std::cout << read_buffer << std::endl;
 
-  getchar();
   return 0;
 }

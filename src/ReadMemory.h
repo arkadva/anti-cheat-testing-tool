@@ -12,13 +12,13 @@ BOOL RPM(HANDLE process, LPCVOID address, LPVOID buffer, SIZE_T size, SIZE_T* re
 
 // bitflags for read memory type
 enum ReadMemoryType {
-  kReadProcessMemory = 0x1,
-  kNtReadVirtualMemory = 0x2
+  kReadProcessMemory = 0,
+  kNtReadVirtualMemory = 1 << 0
 };
 
 class ReadMemory : public MemoryAccess {
 public:
-  ReadMemory(uintptr_t address, void* buffer, size_t size, BYTE type)
+  ReadMemory(LPVOID address, void* buffer, size_t size, BYTE type)
     : MemoryAccess(address), buffer_(buffer), size_(size), type_(type) { }
 
   virtual bool execute(const Process* process) const override {

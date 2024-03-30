@@ -9,9 +9,9 @@ int injectIntoPID(int process, int method, const wchar_t* dll);
 
 // bitflgs for injection type
 enum RemoteThreadType {
-	kNtCreateThreadEx = 0x1,
-	kRtlCreateUserThread = 0x2,
-	kCreateRemoteThread = 0x4
+	kNtCreateThreadEx = 0,
+	kRtlCreateUserThread = 1 << 0,
+	kCreateRemoteThread = 1 << 1
 };
 
 class CreateRemoteThreadInjection : public DLLInjection {

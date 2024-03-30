@@ -10,13 +10,13 @@ BOOL NTWVM(HANDLE process, PVOID address, PVOID buffer, ULONG size, PULONG writt
 
 // bitflags for write memory type
 enum WriteMemoryType {
-  kWriteProcessMemory = 0x1,
-  kNtWriteVirtualMemory = 0x2
+  kWriteProcessMemory = 0,
+  kNtWriteVirtualMemory = 1 << 0
 };
 
 class WriteMemory : public MemoryAccess {
 public:
-  WriteMemory(uintptr_t address, void* buffer, size_t size, BYTE type)
+  WriteMemory(LPVOID address, void* buffer, size_t size, BYTE type)
     : MemoryAccess(address), buffer_(buffer), size_(size), type_(type) { }
 
   virtual bool execute(const Process* process) const override {
@@ -32,11 +32,11 @@ public:
     bool success = false;
 
     if (type_ & kWriteProcessMemory) {
-      success = WPM(processHandle, (LPVOID)address_, buffer_, size_, &bytesWritten);
+      success = WPM(processHandle, address_, buffer_, size_, &bytesWritten);
     }
 
     if (type_ & kNtWriteVirtualMemory) {
-      success = NTWVM(processHandle, (PVOID)address_, buffer_, (ULONG)size_, &bytesWrittenNt);
+      success = NTWVM(processHandle, address_, buffer_, (ULONG)size_, &bytesWrittenNt);
     }
 
     std::cout << "Bytes written: " << bytesWritten << " Bytes written NT: " << bytesWrittenNt << std::endl;

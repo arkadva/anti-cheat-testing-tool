@@ -8,11 +8,13 @@
 
 class MemoryAccess : public Module {
 public:
-  MemoryAccess(uintptr_t address) : address_(address) { }
+  MemoryAccess(LPVOID address) : address_(address) { }
+  MemoryAccess() : address_(NULL) { }
+
   virtual bool execute(const Process* process) const = 0;
 
 protected:
-  const uintptr_t address_;
+  LPVOID address_;
 };
 
 #endif

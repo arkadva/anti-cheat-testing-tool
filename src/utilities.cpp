@@ -55,14 +55,4 @@ namespace utilities {
     PIMAGE_EXPORT_DIRECTORY export_directory = PIMAGE_EXPORT_DIRECTORY((LPBYTE)module + nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
     return export_directory;
   }
-
-  std::vector<void*> GetVMTFunctions(void** vtable) {
-    std::vector<void*> functions;
-
-    for (int i = 0; vtable[i] != nullptr; ++i) {
-      functions.push_back(vtable[i]);
-    }
-
-    return functions;
-  }
 }

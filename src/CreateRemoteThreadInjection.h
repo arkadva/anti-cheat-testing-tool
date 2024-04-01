@@ -5,7 +5,7 @@
 #include "dllinjection.h"
 #include "utilities.h"
 
-int injectIntoPID(int process, int method, const wchar_t* dll);
+int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll);
 
 // bitflgs for injection type
 enum RemoteThreadType {
@@ -16,10 +16,11 @@ enum RemoteThreadType {
 
 class CreateRemoteThreadInjection : public DLLInjection {
 public:
-  CreateRemoteThreadInjection(const std::wstring& path, BYTE attacks) : DLLInjection(path), _attacks(attacks) { }
+  CreateRemoteThreadInjection(const std::wstring& path, BYTE attacks) : DLLInjection(path), _attacks(attacks) {
+		module_name = "CreateRemoteThread DLL injection";
+	}
 
 	// TODO: missing dll unload mechanism
-	// TODO: add logging after each injection (success/failure)
   virtual bool execute(const Process* process) const override {
 		DWORD pid = process->GetPid();
 

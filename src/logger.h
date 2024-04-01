@@ -1,5 +1,18 @@
+#include "utilities.h"
+#include "debug.h"
+#include <cstring>
+
 #ifndef LOGGER_H_
 #define LOGGER_H_
+
+#define FILENAME (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+#define LOG_BASE(level, message, ...) logger.level(utilities::string_format(message, ##__VA_ARGS__))
+#define LOG_INFO(message, ...) LOG_BASE(info, message, ##__VA_ARGS__)
+#define LOG_ERROR(message, ...) logger.error(utilities::string_format(std::string(message) + " %s::%s::%d", ##__VA_ARGS__, FILENAME, __FUNCTION__, __LINE__))
+#define LOG_WARN(message, ...) LOG_BASE(warn, message, ##__VA_ARGS__)
+#define LOG_CALL(message, ...) LOG_INFO(std::string("Function call: ") + __FUNCTION__ + "(" + message + ")", ##__VA_ARGS__)
+
 
 #include <string>
 #include <vector>

@@ -1,43 +1,43 @@
 #include <windows.h>
 #include "ExecHeap.h"
 #include "logger.h"
+#include "utilities.h"
 
-// temporary shellcode
-unsigned char shellcode[] = { 
-  0xc3  // x86 ret instruction
-};
-
-bool ExecHeap::execute(const Process* process) const {
+BOOL WriteAndExec(DWORD pid, LPVOID address, LPCSTR shellcode, SIZE_T size) {
   Logger& logger = Logger::getInstance();
 
-  memcpy(address_, shellcode, sizeof(shellcode));
+#ifdef DEBUG
+  LOG_CALL("pid = %lu, address = %p, shellcode = %p, size = %lu", pid, address, shellcode, size);
+#endif
+
+  memcpy(address, shellcode, size);
   DWORD oldProtect;
 
-  if (!VirtualProtect(address_, 1, PAGE_EXECUTE_READ, &oldProtect)) {
-    VirtualFree(address_, 0, MEM_RELEASE);
-    logger.error("Proteciton change failed.");
-    return false;
+  if (!VirtualProtect(address, 1, PAGE_EXECUTE_READ, &oldProtect)) {
+    VirtualFree(address, 0, MEM_RELEASE);
+    LOG_ERROR("Proteciton change failed.");
+    return FALSE;
   }
-  HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, process->GetPid());
+  HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
   if (processHandle == NULL) {
-    VirtualFree(address_, 0, MEM_RELEASE);
-    logger.error("Opening a handle failed.");
-    return false;
+    VirtualFree(address, 0, MEM_RELEASE);
+    LOG_ERROR("Opening a handle failed.");
+    return FALSE;
   }
 
-  LPTHREAD_START_ROUTINE threadStart = (LPTHREAD_START_ROUTINE) address_;
+  LPTHREAD_START_ROUTINE threadStart = (LPTHREAD_START_ROUTINE)address;
   HANDLE threadHandle = CreateRemoteThread(processHandle, NULL, 0, threadStart, NULL, 0, NULL);
 
   if (threadHandle == NULL) {
     CloseHandle(processHandle);
-    VirtualFree(address_, 0, MEM_RELEASE);
-    logger.error("Thread creation failed.");
-    return false;
+    VirtualFree(address, 0, MEM_RELEASE);
+    LOG_ERROR("Thread creation failed.");
+    return FALSE;
   }
 
   CloseHandle(threadHandle);
   CloseHandle(processHandle);
 
-  return true;
+  return TRUE;
 }

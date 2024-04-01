@@ -1,5 +1,6 @@
 #include "module.h"
 #include "cheatmanager.h"
+#include "logger.h"
 
 CheatManager::CheatManager(const Process* process)
   : _process(process),
@@ -12,7 +13,17 @@ CheatManager::CheatManager(const Process* process, const std::vector<Module*>* a
 }
 
 void CheatManager::execute() const {
+  Logger& logger = Logger::getInstance();
+
   for (Module* module : *_attacks) {
-    module->execute(_process);
+    LOG_INFO("Executing %s.", module->GetName());
+    bool result = module->execute(_process);
+
+    if (result) {
+      LOG_INFO("Executing %s succeeded.", module->GetName());
+    }
+    else {
+      LOG_ERROR("Executing %s failed.", module->GetName());
+    }
   }
 }

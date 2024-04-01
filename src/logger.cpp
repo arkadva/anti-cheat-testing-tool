@@ -6,7 +6,7 @@
 #define RESET "\033[0m"
 #define RED "\033[31m"    // error
 #define YELLOW "\033[33m" // warning
-#define BLUE "\033[34m"   // info
+#define WHITE "\033[37m"   // info
 
 Logger::Logger(int mask) : logmask(mask) {}
 
@@ -16,6 +16,9 @@ Logger& Logger::getInstance(int mask) {
 }
 
 Logger::~Logger() {
+  // delete ANSI colors first (or store them seperately)
+
+  /* 
   std::ofstream log_file("logs.txt");
   if (log_file.is_open()) {
     for (const auto& msg : messages) {
@@ -26,6 +29,7 @@ Logger::~Logger() {
   else {
     std::cerr << "Error opening logs.txt for writing." << std::endl;
   }
+  */
 }
 
 void Logger::info(const std::string& message) {
@@ -42,21 +46,21 @@ void Logger::error(const std::string& message) {
 
 void Logger::log(const std::string& message, LogType type) {
   if (type & logmask) {
-    std::string message;
+    std::string log_message;
     switch (type) {
     case kInfo:
-      message = std::string(BLUE) + message + RESET;
+      log_message = std::string(WHITE) + message + RESET;
       break;
     case kWarning:
-      message = std::string(YELLOW) + message + RESET;
+      log_message = std::string(YELLOW) + message + RESET;
       break;
     case kError:
-      message = std::string(RED) + message + RESET;
+      log_message = std::string(RED) + message + RESET;
       break;
     default:
-      message = message;
+      log_message = message;
     }
-    std::cout << message << std::endl;
-    messages.push_back(message);
+    std::cout << log_message << std::endl;
+    messages.push_back(log_message);
   }
 }

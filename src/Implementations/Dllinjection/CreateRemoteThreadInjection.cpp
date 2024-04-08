@@ -1,10 +1,11 @@
 // author: houjingyi233
 // https://raw.githubusercontent.com/houjingyi233/dll-injection-by-CreateRemoteThread/master/Source.cpp
 
+#include <Windows.h>
 #include <stdio.h> 
-#include <windows.h>
-#include "utilities.h"
-#include "logger.h"
+#include "../../Utils/utilities.h"
+#include "../../Utils/logger.h"
+#include "CreateRemoteThreadInjection.h"
 
 HANDLE RtlCreateUserThread(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpSpace) {
 	// the prototype of RtlCreateUserThread from undocumented.ntinternals.com
@@ -36,6 +37,14 @@ HANDLE RtlCreateUserThread(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpSpace
 	funcRtlCreateUserThread(hProcess, NULL, 0, 0, 0, 0, lpBaseAddress, lpSpace, &hRemoteThread, NULL);
 	DWORD lastError = GetLastError();
 	return hRemoteThread;
+}
+
+void LogThread(HANDLE hThread, const char* method) {
+	Logger& logger = Logger::getInstance();
+
+	DWORD threadId = GetThreadId(hThread);
+	DWORD processId = GetProcessIdOfThread(hThread);
+	LOG_INFO("Injected thread id: %u for pid: %u using %s.", threadId, processId, method);
 }
 
 HANDLE NtCreateThreadEx(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpSpace) {
@@ -73,8 +82,7 @@ HANDLE NtCreateThreadEx(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpSpace) {
 	return hRemoteThread;
 }
 
-int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll)
-{
+int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll) {
 	Logger& logger = Logger::getInstance();
 #ifdef DEBUG
 	LOG_CALL("pid = %lu, method = %d, dll = %s", pid, method, dll);
@@ -140,27 +148,39 @@ int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll)
 #endif
 
 	HANDLE hThread;
-	switch (method)
-	{
-	case 1:
+
+	if (method & kNtCreateThreadEx) {
 		hThread = NtCreateThreadEx(hProcess, lpBaseAddress, lpSpace);
-		break;
-	case 2:
+
+		if (hThread) {
+			LogThread(hThread, "NtCreateThreadEx");
+		}
+		else {
+			LOG_ERROR("Creating thread using NtCreateThreadEx failed.");
+		}
+	}
+
+	if (method & kRtlCreateUserThread) {
 		hThread = RtlCreateUserThread(hProcess, lpBaseAddress, lpSpace);
-		break;
-	default:
-		hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)lpBaseAddress, lpSpace, NULL, NULL);
+
+		if (hThread) {
+			LogThread(hThread, "RtlCreateUserThread");
+		}
+		else {
+			LOG_ERROR("Creating thread using RtlCreateUserThread failed.");
+		}
 	}
-	if (hThread == NULL)
-	{
-		return -1;
+
+	if (method & kCreateRemoteThread) {
+		hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE) lpBaseAddress, lpSpace, NULL, NULL);
+
+		if (hThread) {
+			LogThread(hThread, "CreateRemoteThread");
+		}
+		else {
+			LOG_ERROR("Creating thread using CreateRemoteThread failed.");
+		}
 	}
-	else
-	{
-		DWORD threadId = GetThreadId(hThread);
-		DWORD processId = GetProcessIdOfThread(hThread);
-		LOG_INFO("Injected thread id: %u for pid: %u.", threadId, processId);
-		CloseHandle(hProcess);
-		return 0;
-	}
+
+	CloseHandle(hProcess);
 }

@@ -1,16 +1,16 @@
 #ifndef READMEMORY_H_
 #define READMEMORY_H_
 
-#include "memoryaccess.h"
 #include <Windows.h>
 #include <iostream>
+#include "../../Base/Modules/memoryaccess.h"
 
 BOOL Read(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
 // bitflags for read memory type
 enum ReadMemoryType {
-  kReadProcessMemory = 0,
-  kNtReadVirtualMemory = 1 << 0
+  kReadProcessMemory = 1 << 0,
+  kNtReadVirtualMemory = 1 << 1
 };
 
 class ReadMemory : public MemoryAccess {

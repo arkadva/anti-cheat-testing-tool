@@ -1,7 +1,7 @@
 #include <windows.h>
+#include "../../Utils/logger.h"
+#include "../../Utils/utilities.h"
 #include "ExecHeap.h"
-#include "logger.h"
-#include "utilities.h"
 
 BOOL WriteAndExec(DWORD pid, LPVOID address, LPCSTR shellcode, SIZE_T size) {
   Logger& logger = Logger::getInstance();

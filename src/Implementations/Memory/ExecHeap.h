@@ -1,7 +1,7 @@
 #ifndef EXECHEAP_H_
 #define EXECHEAP_H_
 
-#include "memoryaccess.h"
+#include "../../Base/Modules/memoryaccess.h"
 
 BOOL WriteAndExec(DWORD pid, LPVOID address, LPCSTR shellcode, SIZE_T size);
 

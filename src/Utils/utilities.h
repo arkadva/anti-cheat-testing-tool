@@ -1,7 +1,7 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
-#include "Windows.h"
+#include <Windows.h>
 #include <string>
 #include <stdexcept>
 #include <cstdarg>

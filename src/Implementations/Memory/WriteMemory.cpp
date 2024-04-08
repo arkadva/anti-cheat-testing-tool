@@ -1,7 +1,7 @@
-#include "WriteMemory.h"
-#include "logger.h"
-#include "utilities.h"
 #include <Windows.h>
+#include "../../Utils/logger.h"
+#include "../../Utils/utilities.h"
+#include "WriteMemory.h"
 
 // prototype for NtWriteVirtualMemory
 typedef NTSTATUS(NTAPI* PFN_NtWriteVirtualMemory)(
@@ -42,7 +42,7 @@ BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
   SIZE_T bytesWritten = 0;
   ULONG bytesWrittenNt = 0;
 
-  HANDLE processHandle = OpenProcess(PROCESS_VM_READ, FALSE, pid);
+  HANDLE processHandle = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE, FALSE, pid);
 
   if (processHandle == NULL) {
     LOG_ERROR("Failed to open handle to process.");
@@ -50,13 +50,13 @@ BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
   }
 
 #ifdef DEBUG
-  LOG_INFO("Opened handle to process %lu.", processHandle);
+  LOG_INFO("Opened handle %lu to process.", processHandle);
 #endif
 
   BOOL success = TRUE;
 
   if (type & kWriteProcessMemory) {
-    BOOL status = WPM(processHandle, (LPVOID)address, buffer, size, &bytesWritten);
+    BOOL status = WPM(processHandle, (LPVOID) address, buffer, size, &bytesWritten);
     success &= status;
 
     if (status) {
@@ -68,7 +68,7 @@ BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
   }
 
   if (type & kNtWriteVirtualMemory) {
-    BOOL status = NTWVM(processHandle, (PVOID)address, buffer, (ULONG)size, &bytesWrittenNt);
+    BOOL status = NTWVM(processHandle, (PVOID) address, buffer, (ULONG) size, &bytesWrittenNt);
     success &= status;
 
     if (status) {

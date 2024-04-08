@@ -2,7 +2,7 @@
 #define CHEATMANAGER_H_
 
 #include "process.h"
-#include "module.h"
+#include "../Base/Modules/module.h"
 
 class CheatManager {
 public:
@@ -12,7 +12,7 @@ public:
 
 private:
   const Process* _process;
-  std::vector<Module*>* _attacks; // rewrite using smart pointer?
+  std::vector<Module*>* _attacks;
 };
 
 #endif

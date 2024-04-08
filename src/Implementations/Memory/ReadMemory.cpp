@@ -1,7 +1,7 @@
-#include "ReadMemory.h"
-#include "logger.h"
-#include "utilities.h"
 #include <Windows.h>
+#include "../../Utils/logger.h"
+#include "../../Utils/utilities.h"
+#include "ReadMemory.h"
 
 // prototype for NtReadVirtualMemory
 typedef NTSTATUS(NTAPI* PFN_NtReadVirtualMemory)(

@@ -6,6 +6,7 @@
 #include <TlHelp32.h>
 #include <stdio.h>
 #include <string>
+#include "../../Utils/logger.h"
 
 // NOTE will crash when target(?) is compiled in Debug mode
 bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeader = true, bool ClearNonNeededSections = true, bool AdjustProtections = true, bool SEHExceptionSupport = true, DWORD fdwReason = DLL_PROCESS_ATTACH, LPVOID lpReserved = 0);
@@ -32,11 +33,6 @@ struct MANUAL_MAPPING_DATA
 	BOOL SEHSupport;
 };
 
-#if defined(DISABLE_OUTPUT)
-#define ILog(data, ...)
-#else
-#define ILog(text, ...) printf(text, __VA_ARGS__);
-#endif
 
 #ifdef _WIN64
 #define CURRENT_ARCH IMAGE_FILE_MACHINE_AMD64
@@ -47,9 +43,11 @@ struct MANUAL_MAPPING_DATA
 void __stdcall Shellcode(MANUAL_MAPPING_DATA* pData);
 
 bool IsCorrectTargetArchitecture(HANDLE hProc) {
+	Logger& logger = Logger::getInstance();
+
 	BOOL bTarget = FALSE;
 	if (!IsWow64Process(hProc, &bTarget)) {
-		printf("Can't confirm target process architecture: 0x%X\n", GetLastError());
+		LOG_ERROR("Can't confirm target process architecture: 0x%X.", GetLastError());
 		return false;
 	}
 
@@ -60,13 +58,15 @@ bool IsCorrectTargetArchitecture(HANDLE hProc) {
 }
 
 bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeader, bool ClearNonNeededSections, bool AdjustProtections, bool SEHExceptionSupport, DWORD fdwReason, LPVOID lpReserved) {
+	Logger& logger = Logger::getInstance();
+
 	IMAGE_NT_HEADERS* pOldNtHeader = nullptr;
 	IMAGE_OPTIONAL_HEADER* pOldOptHeader = nullptr;
 	IMAGE_FILE_HEADER* pOldFileHeader = nullptr;
 	BYTE* pTargetBase = nullptr;
 
 	if (reinterpret_cast<IMAGE_DOS_HEADER*>(pSrcData)->e_magic != 0x5A4D) { //"MZ"
-		ILog("Invalid file\n");
+		LOG_ERROR("File is not a PE.");
 		return false;
 	}
 
@@ -75,15 +75,15 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	pOldFileHeader = &pOldNtHeader->FileHeader;
 
 	if (pOldFileHeader->Machine != CURRENT_ARCH) {
-		ILog("Invalid platform\n");
+		LOG_ERROR("Invalid platform.");
 		return false;
 	}
 
-	ILog("File ok\n");
+	LOG_INFO("File ok.");
 
 	pTargetBase = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc, nullptr, pOldOptHeader->SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	if (!pTargetBase) {
-		ILog("Target process memory allocation failed (ex) 0x%X\n", GetLastError());
+		LOG_ERROR("Target process memory allocation failed (ex) 0x%X.", GetLastError());
 		return false;
 	}
 
@@ -104,9 +104,9 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	data.SEHSupport = SEHExceptionSupport;
 
 
-	//File header
-	if (!WriteProcessMemory(hProc, pTargetBase, pSrcData, 0x1000, nullptr)) { //only first 0x1000 bytes for the header
-		ILog("Can't write file header 0x%X\n", GetLastError());
+	// file header
+	if (!WriteProcessMemory(hProc, pTargetBase, pSrcData, 0x1000, nullptr)) { // only first 0x1000 bytes for the header
+		LOG_ERROR("Can't write file header 0x%X.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		return false;
 	}
@@ -115,60 +115,60 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	for (UINT i = 0; i != pOldFileHeader->NumberOfSections; ++i, ++pSectionHeader) {
 		if (pSectionHeader->SizeOfRawData) {
 			if (!WriteProcessMemory(hProc, pTargetBase + pSectionHeader->VirtualAddress, pSrcData + pSectionHeader->PointerToRawData, pSectionHeader->SizeOfRawData, nullptr)) {
-				ILog("Can't map sections: 0x%x\n", GetLastError());
+				LOG_ERROR("Can't map sections: 0x%x.", GetLastError());
 				VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 				return false;
 			}
 		}
 	}
 
-	//Mapping params
+	// mapping params
 	BYTE* MappingDataAlloc = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc, nullptr, sizeof(MANUAL_MAPPING_DATA), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	if (!MappingDataAlloc) {
-		ILog("Target process mapping allocation failed (ex) 0x%X\n", GetLastError());
+		LOG_ERROR("Target process mapping allocation failed(ex) 0x % X.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		return false;
 	}
 
 	if (!WriteProcessMemory(hProc, MappingDataAlloc, &data, sizeof(MANUAL_MAPPING_DATA), nullptr)) {
-		ILog("Can't write mapping 0x%X\n", GetLastError());
+		LOG_ERROR("Can't write mapping 0x%X.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE);
 		return false;
 	}
 
-	//Shell code
+	// shell code
 	void* pShellcode = VirtualAllocEx(hProc, nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 	if (!pShellcode) {
-		ILog("Memory shellcode allocation failed (ex) 0x%X\n", GetLastError());
+		LOG_ERROR("Memory shellcode allocation failed (ex) 0x%X.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE);
 		return false;
 	}
 
 	if (!WriteProcessMemory(hProc, pShellcode, Shellcode, 0x1000, nullptr)) {
-		ILog("Can't write shellcode 0x%X\n", GetLastError());
+		LOG_ERROR("Can't write shellcode 0x%X\.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, pShellcode, 0, MEM_RELEASE);
 		return false;
 	}
 
-	ILog("Mapped DLL at %p\n", pTargetBase);
-	ILog("Mapping info at %p\n", MappingDataAlloc);
-	ILog("Shell code at %p\n", pShellcode);
+	LOG_INFO("Mapped DLL at %p\n", pTargetBase);
+	LOG_INFO("Mapping info at %p\n", MappingDataAlloc);
+	LOG_INFO("Shell code at %p\n", pShellcode);
 
-	ILog("Data allocated\n");
+	LOG_INFO("Data allocated\n");
 
-#ifdef _DEBUG
-	ILog("My shellcode pointer %p\n", Shellcode);
-	ILog("Target point %p\n", pShellcode);
+#ifdef DEBUG
+	LOG_INFO("My shellcode pointer %p\n", Shellcode);
+	LOG_INFO("Target point %p\n", pShellcode);
 	system("pause");
 #endif
 
 	HANDLE hThread = CreateRemoteThread(hProc, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pShellcode), MappingDataAlloc, 0, nullptr);
 	if (!hThread) {
-		ILog("Thread creation failed 0x%X\n", GetLastError());
+		LOG_ERROR("Thread creation failed 0x%X.", GetLastError());
 		VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE);
 		VirtualFreeEx(hProc, pShellcode, 0, MEM_RELEASE);
@@ -176,14 +176,14 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	}
 	CloseHandle(hThread);
 
-	ILog("Thread created at: %p, waiting for return...\n", pShellcode);
+	LOG_INFO("Thread created at: %p, waiting for return....", pShellcode);
 
 	HINSTANCE hCheck = NULL;
 	while (!hCheck) {
 		DWORD exitcode = 0;
 		GetExitCodeProcess(hProc, &exitcode);
 		if (exitcode != STILL_ACTIVE) {
-			ILog("Process crashed, exit code: %d\n", exitcode);
+			LOG_ERROR("Process crashed, exit code: %d.", exitcode);
 			return false;
 		}
 
@@ -192,14 +192,14 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 		hCheck = data_checked.hMod;
 
 		if (hCheck == (HINSTANCE)0x404040) {
-			ILog("Wrong mapping ptr\n");
+			LOG_ERROR("Wrong mapping ptr.");
 			VirtualFreeEx(hProc, pTargetBase, 0, MEM_RELEASE);
 			VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE);
 			VirtualFreeEx(hProc, pShellcode, 0, MEM_RELEASE);
 			return false;
 		}
 		else if (hCheck == (HINSTANCE)0x505050) {
-			ILog("WARNING: Exception support failed!\n");
+			LOG_WARN("Exception support failed!.");
 		}
 
 		Sleep(10);
@@ -207,18 +207,18 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 
 	BYTE* emptyBuffer = (BYTE*)malloc(1024 * 1024 * 20);
 	if (emptyBuffer == nullptr) {
-		ILog("Unable to allocate memory\n");
+		LOG_ERROR("Unable to allocate memory.");
 		return false;
 	}
 	memset(emptyBuffer, 0, 1024 * 1024 * 20);
 
-	//CLEAR PE HEAD
+	// CLEAR PE HEAD
 	if (ClearHeader) {
 		if (!WriteProcessMemory(hProc, pTargetBase, emptyBuffer, 0x1000, nullptr)) {
-			ILog("WARNING!: Can't clear HEADER\n");
+			LOG_WARN("Can't clear HEADER.");
 		}
 	}
-	//END CLEAR PE HEAD
+	// END CLEAR PE HEAD
 
 
 	if (ClearNonNeededSections) {
@@ -228,9 +228,9 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 				if ((SEHExceptionSupport ? 0 : strcmp((char*)pSectionHeader->Name, ".pdata") == 0) ||
 					strcmp((char*)pSectionHeader->Name, ".rsrc") == 0 ||
 					strcmp((char*)pSectionHeader->Name, ".reloc") == 0) {
-					ILog("Processing %s removal\n", pSectionHeader->Name);
+					LOG_INFO("Processing %s removal.", pSectionHeader->Name);
 					if (!WriteProcessMemory(hProc, pTargetBase + pSectionHeader->VirtualAddress, emptyBuffer, pSectionHeader->Misc.VirtualSize, nullptr)) {
-						ILog("Can't clear section %s: 0x%x\n", pSectionHeader->Name, GetLastError());
+						LOG_WARN("Can't clear section %s: 0x%x.", pSectionHeader->Name, GetLastError());
 					}
 				}
 			}
@@ -251,10 +251,10 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 					newP = PAGE_EXECUTE_READ;
 				}
 				if (VirtualProtectEx(hProc, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old)) {
-					ILog("section %s set as %lX\n", (char*)pSectionHeader->Name, newP);
+					LOG_INFO("Section %s set as %lX.", (char*)pSectionHeader->Name, newP);
 				}
 				else {
-					ILog("FAIL: section %s not set as %lX\n", (char*)pSectionHeader->Name, newP);
+					LOG_ERROR("Section %s not set as %lX\n", (char*)pSectionHeader->Name, newP);
 				}
 			}
 		}
@@ -263,13 +263,13 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	}
 
 	if (!WriteProcessMemory(hProc, pShellcode, emptyBuffer, 0x1000, nullptr)) {
-		ILog("WARNING: Can't clear shellcode\n");
+		LOG_WARN("Can't clear shellcode.");
 	}
 	if (!VirtualFreeEx(hProc, pShellcode, 0, MEM_RELEASE)) {
-		ILog("WARNING: can't release shell code memory\n");
+		LOG_WARN("Can't release shell code memory.");
 	}
 	if (!VirtualFreeEx(hProc, MappingDataAlloc, 0, MEM_RELEASE)) {
-		ILog("WARNING: can't release mapping data memory\n");
+		LOG_WARN("Can't release mapping data memory.");
 	}
 
 	return true;
@@ -380,7 +380,9 @@ void __stdcall Shellcode(MANUAL_MAPPING_DATA* pData) {
 }
 
 int ManualMappingInjection(DWORD pid, const std::wstring& path) {
-	printf("Process pid: %d\n", pid);
+	Logger& logger = Logger::getInstance();
+
+	LOG_INFO("Process pid: %d.", pid);
 
 	TOKEN_PRIVILEGES priv = { 0 };
 	HANDLE hToken = NULL;
@@ -397,51 +399,50 @@ int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 	if (!hProc) {
 		DWORD Err = GetLastError();
-		printf("OpenProcess failed: 0x%X\n", Err);
-		system("PAUSE");
+		LOG_ERROR("OpenProcess failed: 0x%X.", Err);
+		//system("PAUSE");
 		return -2;
 	}
 
 	if (!IsCorrectTargetArchitecture(hProc)) {
-		printf("Invalid Process Architecture.\n");
+		LOG_ERROR("Invalid Process Architecture.");
 		CloseHandle(hProc);
-		system("PAUSE");
+		//system("PAUSE");
 		return -3;
 	}
 
 	if (GetFileAttributes(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
-		std::wcout << path << " ok ? " << std::endl;
-		printf("Dll file doesn't exist\n");
+		LOG_ERROR("Dll file doesn't exist.");
 		CloseHandle(hProc);
-		system("PAUSE");
+		//system("PAUSE");
 		return -4;
 	}
 
 	std::ifstream File(path, std::ios::binary | std::ios::ate);
 
 	if (File.fail()) {
-		printf("Opening the file failed: %X\n", (DWORD)File.rdstate());
+		LOG_ERROR("Opening the file failed: %X.", (DWORD)File.rdstate());
 		File.close();
 		CloseHandle(hProc);
-		system("PAUSE");
+		//system("PAUSE");
 		return -5;
 	}
 
 	auto FileSize = File.tellg();
 	if (FileSize < 0x1000) {
-		printf("Filesize invalid.\n");
+		LOG_ERROR("Filesize invalid.");
 		File.close();
 		CloseHandle(hProc);
-		system("PAUSE");
+		//system("PAUSE");
 		return -6;
 	}
 
 	BYTE* pSrcData = new BYTE[(UINT_PTR)FileSize];
 	if (!pSrcData) {
-		printf("Can't allocate dll file.\n");
+		LOG_ERROR("Can't allocate dll file.");
 		File.close();
 		CloseHandle(hProc);
-		system("PAUSE");
+		//system("PAUSE");
 		return -7;
 	}
 
@@ -453,14 +454,14 @@ int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 	if (!ManualMapDll(hProc, pSrcData, FileSize)) {
 		delete[] pSrcData;
 		CloseHandle(hProc);
-		printf("Error while mapping.\n");
-		system("PAUSE");
+		LOG_ERROR("Error while mapping.");
+		//system("PAUSE");
 		return -8;
 	}
 	delete[] pSrcData;
 
 	CloseHandle(hProc);
-	printf("OK\n");
+	// LOG_INFO("OK.");
 
 	return 1;
 }

@@ -1,7 +1,8 @@
 #ifndef MANUALMAPPING_H_
 #define MANUALMAPPING_H_
 
-#include "dllinjection.h"
+#include "../../Base/Modules/dllinjection.h"
+#include "../../Utils/utilities.h"
 
 int ManualMappingInjection(DWORD pid, const std::wstring& path);
 

@@ -2,7 +2,7 @@
 #define MODULE_H_
 
 #include <Windows.h>
-#include "process.h"
+#include "../../Utils/process.h"
 
 class Module {
 public:

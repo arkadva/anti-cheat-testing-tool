@@ -1,6 +1,6 @@
-#include "Logger.h"
 #include <fstream>
 #include <iostream>
+#include "logger.h"
 
 // ANSI color codes
 #define RESET "\033[0m"

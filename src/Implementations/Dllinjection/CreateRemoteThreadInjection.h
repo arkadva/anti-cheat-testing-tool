@@ -2,16 +2,16 @@
 #define CREATEREMOTETHREADINJECTION_H_
 
 #include <iostream>
-#include "dllinjection.h"
-#include "utilities.h"
+#include "../../Base/Modules/dllinjection.h"
+#include "../../Utils/utilities.h"
 
 int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll);
 
 // bitflgs for injection type
 enum RemoteThreadType {
-	kNtCreateThreadEx = 0,
-	kRtlCreateUserThread = 1 << 0,
-	kCreateRemoteThread = 1 << 1
+	kNtCreateThreadEx = 1 << 0,
+	kRtlCreateUserThread = 1 << 1,
+	kCreateRemoteThread = 1 << 2
 };
 
 class CreateRemoteThreadInjection : public DLLInjection {

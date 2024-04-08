@@ -1,16 +1,16 @@
 #ifndef WRITEMEMORY_H_
 #define WRITEMEMORY_H_
 
-#include "memoryaccess.h"
 #include <Windows.h>
 #include <iostream>
+#include "../../Base/Modules/memoryaccess.h"
 
 BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
 // bitflags for write memory type
 enum WriteMemoryType {
-  kWriteProcessMemory = 0,
-  kNtWriteVirtualMemory = 1 << 0
+  kWriteProcessMemory = 1 << 0,
+  kNtWriteVirtualMemory = 1 << 1
 };
 
 class WriteMemory : public MemoryAccess {

@@ -1,4 +1,4 @@
-## Steps
+## Steps (Outdated)
 Tested with Visual Studio 17 2022.
 1. Clone the repository:
    ```

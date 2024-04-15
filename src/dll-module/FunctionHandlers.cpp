@@ -5,12 +5,8 @@
 
 std::map<std::string, std::function<BOOL(std::vector<std::string>)>> functionMap;
 
-BOOL a_wrapper(std::vector<std::string> params) {
-  return TRUE;
-}
-
 void InitializeFunctionMap() {
-  functionMap["a"] = a_wrapper;
+  functionMap["PageGuardHook"] = PageGuardHook_wrapper;
 }
 
 BOOL HandleRequest(const std::string& request) {
@@ -37,4 +33,11 @@ BOOL HandleRequest(const std::string& request) {
   }
 
   return result;
+}
+
+BOOL PageGuardHook_wrapper(std::vector<std::string> params) {
+  void* address = reinterpret_cast<void*>(std::stoull(params[0], nullptr, 16));
+  PageGuardHook(address);
+
+  return TRUE;
 }

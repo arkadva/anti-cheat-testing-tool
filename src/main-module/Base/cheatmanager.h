@@ -2,6 +2,7 @@
 #define CHEATMANAGER_H_
 
 #include "process.h"
+#include "../Utils/pipeclient.h"
 #include "../Base/Modules/module.h"
 
 class CheatManager {
@@ -10,9 +11,11 @@ public:
   CheatManager(const Process* process, const std::vector<Module*>* attacks);
   void execute() const;
 
-private:
-  const Process* _process;
-  std::vector<Module*>* _attacks;
+// TODO reveret back protected
+public:
+  const Process* process_;
+  PipeClient* client_;
+  std::vector<Module*>* attacks_;
 };
 
 #endif

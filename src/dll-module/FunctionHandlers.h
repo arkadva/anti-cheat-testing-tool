@@ -6,13 +6,15 @@
 #include <vector>
 #include <map>
 #include <functional>
-
-BOOL a_wrapper(std::vector<std::string> params);
+#include "PageGuardHook.h"
 
 extern std::map<std::string, std::function<BOOL(std::vector<std::string>)>> functionMap;
 
 void InitializeFunctionMap();
 
 BOOL HandleRequest(const std::string& request);
+
+// hooks
+BOOL PageGuardHook_wrapper(std::vector<std::string> params);
 
 #endif

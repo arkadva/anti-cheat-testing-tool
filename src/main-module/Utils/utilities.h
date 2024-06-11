@@ -9,8 +9,12 @@
 #include <iostream>
 
 namespace utilities {
+  DWORD GetThreadIDFromWindow(HWND hwnd);
+  HWND FindWindowByPID(DWORD pid);
+  DWORD GetMainThreadId(DWORD dwProcessId);
   DWORD GetPIDByName(const std::wstring& name);
   HANDLE GetHandleByName(const std::wstring& name, BOOL inherit_handle, DWORD desired_access);
+  uintptr_t GetModuleBaseAddress(DWORD pid, const wchar_t* moduleName);
 
   // pe utilities
   PIMAGE_EXPORT_DIRECTORY GetExportDirectory(HMODULE module);

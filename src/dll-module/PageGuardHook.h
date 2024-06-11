@@ -10,9 +10,10 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include "struct_definitions.h"
 
-LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* const exceptionInfo);
-void SetMemoryBreakpoint(void* const targetAddress);
-void PageGuardHook(void* address);
+LONG WINAPI PageGuardExceptionHandler(EXCEPTION_POINTERS* const exceptionInfo);
+void SetPageGuardHook(void* const targetAddress);
+void PageGuardHook(BreakpointHookData* hookData, ContextChangeEntry* entryList);
 
 #endif

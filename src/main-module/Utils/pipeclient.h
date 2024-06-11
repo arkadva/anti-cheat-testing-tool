@@ -4,13 +4,23 @@
 #include <windows.h>
 #include <string>
 
+struct BreakpointHookData {
+  void* address;
+  int entriesSize;
+};
+
+struct ContextChangeEntry {
+  void* value;
+  int offset;
+};
+
 class PipeClient {
 public:
   PipeClient(const std::string& pipeName);
   ~PipeClient();
 
   bool connect();
-  bool write(const std::string& message);
+  bool write(BYTE* message, int size);
   std::string read();
   void close();
 

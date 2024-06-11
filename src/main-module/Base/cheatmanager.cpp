@@ -30,3 +30,7 @@ void CheatManager::execute() const {
     }
   }
 }
+
+void CheatManager::AddAttacks(const std::vector<Module*>* attacks) {
+  attacks_ = new std::vector<Module*>(*attacks);
+}

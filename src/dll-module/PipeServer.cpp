@@ -5,9 +5,10 @@
 #include <map>
 #include <sstream>
 
+
 bool CreatePipeServer() {
   HANDLE hPipe;
-  char buffer[1024];
+  BYTE buffer[4096];
   DWORD dwRead, dwWritten;
 
   hPipe = CreateNamedPipeA("\\\\.\\pipe\\actt-pipe",
@@ -29,18 +30,18 @@ bool CreatePipeServer() {
     return false;
   }
 
-  MessageBoxA(NULL, "DLL loaded and pipe server started.", "Info", MB_OK);
+  //MessageBoxA(NULL, "Pipe server started.", "Info", MB_OK);
 
   InitializeFunctionMap();
 
   while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
     buffer[dwRead] = '\0';
-    std::string input(buffer);
 
-    BOOL val = HandleRequest(input);
-
-    std::string result = std::to_string(val);
-    WriteFile(hPipe, buffer, strlen(buffer) + 1, &dwWritten, NULL);
+    char* intent = reinterpret_cast<char*>(buffer);
+    int len = strlen(intent) + 1;
+    
+    HandleRequest(intent, buffer + len);
+    WriteFile(hPipe, intent, len, &dwWritten, NULL);
   }
 
   DisconnectNamedPipe(hPipe);

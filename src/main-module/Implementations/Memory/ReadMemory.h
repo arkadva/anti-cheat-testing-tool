@@ -7,12 +7,6 @@
 
 BOOL Read(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
-// bitflags for read memory type
-enum ReadMemoryType {
-  kReadProcessMemory = 1 << 0,
-  kNtReadVirtualMemory = 1 << 1
-};
-
 class ReadMemory : public MemoryAccess {
 public:
   ReadMemory(LPVOID address, void* buffer, ULONG size, BYTE type)

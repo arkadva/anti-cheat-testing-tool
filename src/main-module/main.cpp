@@ -3,33 +3,28 @@
 #include "./Utils/pipeclient.h"
 #include "./Utils/process.h"
 #include "./Utils/debug.h"
+#include "./Utils/utilities.h"
 
 int main() {
-  const std::wstring dll_name = L"dll1-dbg.dll";
-  const std::wstring actt_dll_name = L"actt-dll.dll";
-  const std::wstring process_name = L"proc1-dbg.exe";
+  const std::wstring process_name = L"ac_client.exe";
+  const std::wstring actt_dll_name = L"D:\\Programming\\anti-cheat-testing-tool\\Release\\actt-dll.dll"; 
+  Process* process = new Process(utilities::GetPIDByName(process_name));
+  CheatManager* cheatManager = new CheatManager(process);
 
-  void* address = reinterpret_cast<void*>(0x000000000014FED0);
-  ULONG write_buffer = 1000;
-  ULONG read_buffer = -1;
+  Sleep(2000);
 
-  Process* process = new Process(process_name);
-  Sleep(1000);
+  BreakpointHookData hookData = { reinterpret_cast<void*>(0x41C223), 1 };
+  ContextChangeEntry entryData = { reinterpret_cast<void*>(-5), offsetof(CONTEXT, Esi) };
 
-  std::vector<Module*> attacks = { 
+  std::vector<Module*> attacks = {
     new CreateRemoteThreadInjection(actt_dll_name, RemoteThreadType::kRtlCreateUserThread),
+    new BreakpointHook(cheatManager->client_, &hookData, &entryData, kPageGuard),
   };
 
-  CheatManager* cheatManager = new CheatManager(process, &attacks);
+  cheatManager->AddAttacks(&attacks);
   cheatManager->execute();
-  
-  Sleep(1000);
 
-  PipeClient* pc = cheatManager->client_;
-  pc->connect();
-  pc->write("PageGuardHook|0x0000000140001079");
-  std::cout << pc->read() << std::endl;
+  Sleep(5000);
 
-  getchar();
   return 0;
 }

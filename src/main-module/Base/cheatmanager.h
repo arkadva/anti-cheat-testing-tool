@@ -10,8 +10,7 @@ public:
   CheatManager(const Process* process);
   CheatManager(const Process* process, const std::vector<Module*>* attacks);
   void execute() const;
-
-// TODO reveret back protected
+  void AddAttacks(const std::vector<Module*>* attacks);
 public:
   const Process* process_;
   PipeClient* client_;

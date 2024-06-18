@@ -97,10 +97,6 @@ int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll) {
 		return FALSE;
 	}
 
-#ifdef DEBUG
-	LOG_INFO("Opened handle %lu to pid %lu with access %lu.", hProcess, pid, handleAccess);
-#endif
-
 	// retrieves kernel32.dll module handle for getting loadlibrary base address
 	HMODULE hModule = GetModuleHandleW(L"kernel32.dll.");
 
@@ -108,10 +104,6 @@ int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll) {
 		LOG_ERROR("Unable to get handle to kernel32.dll.");
 		return FALSE;
 	}
-
-#ifdef DEBUG
-	LOG_INFO("Retrieved kernel32.dll module handle %lu.", hModule);
-#endif
 
 	// gets address for LoadLibraryW in kernel32.dll
 	LPVOID lpBaseAddress = (LPVOID) GetProcAddress(hModule, "LoadLibraryW");
@@ -121,10 +113,6 @@ int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll) {
 		return FALSE;
 	}
 
-#ifdef DEBUG
-	LOG_INFO("Retrieved address %lu of LoadLibraryW in kernel32.dll.", lpBaseAddress);
-#endif
-
 	// allocates space inside for inject.dll to our target process
 	LPVOID lpSpace = (LPVOID) VirtualAllocEx(hProcess, NULL, (wcslen(dll) + 1) * sizeof(wchar_t), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (lpSpace == NULL) {
@@ -132,20 +120,12 @@ int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll) {
 		return -1;
 	}
 
-#ifdef DEBUG
-	LOG_INFO("Allocated memory in target process for DLL name %lu.", lpSpace);
-#endif
-
 	// write inject.dll to memory of process
 	int n = WriteProcessMemory(hProcess, lpSpace, dll, (wcslen(dll) + 1) * sizeof(wchar_t), NULL);
 	if (n == 0) {
 		LOG_ERROR("Could not write to process' address space.");
 		return -1;
 	}
-
-#ifdef DEBUG
-	LOG_INFO("Successfully wrote DLL name into target process. Bytes written: %lu.", n);
-#endif
 
 	HANDLE hThread;
 

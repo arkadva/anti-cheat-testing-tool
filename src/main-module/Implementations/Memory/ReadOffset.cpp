@@ -20,10 +20,6 @@ BOOL ReadOffsetImp(DWORD pid, PVOID address, PVOID buffer, BYTE type, std::vecto
     return FALSE;
   }
 
-#ifdef DEBUG
-  LOG_INFO("Opened handle %lu to process.", processHandle);
-#endif
-
   BOOL success = TRUE;
   uintptr_t pointer = (uintptr_t)address;
 

@@ -49,10 +49,6 @@ BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
     return FALSE;
   }
 
-#ifdef DEBUG
-  LOG_INFO("Opened handle %lu to process.", processHandle);
-#endif
-
   BOOL success = TRUE;
 
   if (type & kWriteProcessMemory) {

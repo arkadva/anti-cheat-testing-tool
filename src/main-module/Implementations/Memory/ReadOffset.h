@@ -9,8 +9,8 @@ BOOL ReadOffsetImp(DWORD pid, PVOID address, PVOID buffer, BYTE type, std::vecto
 
 class ReadOffset : public MemoryAccess {
 public:
-  ReadOffset(LPVOID address, void* buffer, ULONG size, ReadMemoryType type, std::vector<uintptr_t> offsets)
-    : MemoryAccess(address), buffer_(buffer), size_(size), type_(type), offsets_(offsets) {
+  ReadOffset(LPVOID address, void* buffer, ReadMemoryType type, std::vector<uintptr_t> offsets)
+    : MemoryAccess(address), buffer_(buffer), type_(type), offsets_(offsets) {
     module_name = "Read Memory Offset";
   }
 
@@ -21,7 +21,6 @@ public:
 
 private:
   void* buffer_;
-  const ULONG size_;
   const ReadMemoryType type_;
   std::vector<uintptr_t> offsets_;
 };

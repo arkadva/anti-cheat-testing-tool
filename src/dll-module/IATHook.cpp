@@ -2,13 +2,7 @@
 
 void IATHook()
 {
-  OriginalCreateFileW = reinterpret_cast<FnCreateFileW>(CreateHook("CreateFileW", (ULONG_PTR) HookedCreateFileW));
-  OriginalReadFile = reinterpret_cast<FnReadFile>(CreateHook("ReadFile", (ULONG_PTR) HookedReadFile));
-
-  /* Unhook
-  CreateHook("CreateFileW", (ULONG_PTR) OriginalCreateFileW);
-  CreateHook("ReadFile", (ULONG_PTR) OriginalReadFile);
-  */
+  OriginalExitProcess = reinterpret_cast<FnExitProcess>(CreateHook("ExitProcess", (ULONG_PTR) HookedExitProcess));
 }
 
 ULONGLONG CreateHook(const std::string& EntryName, ULONG_PTR HookedFunction)

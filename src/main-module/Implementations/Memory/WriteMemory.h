@@ -7,12 +7,6 @@
 
 BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
-// bitflags for write memory type
-enum WriteMemoryType {
-  kWriteProcessMemory = 1 << 0,
-  kNtWriteVirtualMemory = 1 << 1
-};
-
 class WriteMemory : public MemoryAccess {
 public:
   WriteMemory(LPVOID address, void* buffer, ULONG size, BYTE type)

@@ -37,6 +37,8 @@ BOOL HardwareHook_wrapper(BYTE* buffer) {
 }
 
 BOOL IATHook_wrapper(BYTE* buffer) {
-  //IATHook();
+  MessageBoxA(NULL, "IATHook", "Tesst", NULL);
+
+  IATHook();
   return TRUE;
 }

@@ -79,8 +79,6 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 		return false;
 	}
 
-	LOG_INFO("File ok.");
-
 	pTargetBase = reinterpret_cast<BYTE*>(VirtualAllocEx(hProc, nullptr, pOldOptHeader->SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	if (!pTargetBase) {
 		LOG_ERROR("Target process memory allocation failed (ex) 0x%X.", GetLastError());
@@ -102,7 +100,6 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	data.fdwReasonParam = fdwReason;
 	data.reservedParam = lpReserved;
 	data.SEHSupport = SEHExceptionSupport;
-
 
 	// file header
 	if (!WriteProcessMemory(hProc, pTargetBase, pSrcData, 0x1000, nullptr)) { // only first 0x1000 bytes for the header
@@ -154,16 +151,9 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 		return false;
 	}
 
-	LOG_INFO("Mapped DLL at %p\n", pTargetBase);
-	LOG_INFO("Mapping info at %p\n", MappingDataAlloc);
-	LOG_INFO("Shell code at %p\n", pShellcode);
-
-	LOG_INFO("Data allocated\n");
-
 #ifdef DEBUG
 	LOG_INFO("My shellcode pointer %p\n", Shellcode);
 	LOG_INFO("Target point %p\n", pShellcode);
-	system("pause");
 #endif
 
 	HANDLE hThread = CreateRemoteThread(hProc, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pShellcode), MappingDataAlloc, 0, nullptr);
@@ -175,8 +165,6 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 		return false;
 	}
 	CloseHandle(hThread);
-
-	LOG_INFO("Thread created at: %p, waiting for return....", pShellcode);
 
 	HINSTANCE hCheck = NULL;
 	while (!hCheck) {
@@ -228,7 +216,6 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 				if ((SEHExceptionSupport ? 0 : strcmp((char*)pSectionHeader->Name, ".pdata") == 0) ||
 					strcmp((char*)pSectionHeader->Name, ".rsrc") == 0 ||
 					strcmp((char*)pSectionHeader->Name, ".reloc") == 0) {
-					LOG_INFO("Processing %s removal.", pSectionHeader->Name);
 					if (!WriteProcessMemory(hProc, pTargetBase + pSectionHeader->VirtualAddress, emptyBuffer, pSectionHeader->Misc.VirtualSize, nullptr)) {
 						LOG_WARN("Can't clear section %s: 0x%x.", pSectionHeader->Name, GetLastError());
 					}
@@ -250,10 +237,7 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 				else if ((pSectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) > 0) {
 					newP = PAGE_EXECUTE_READ;
 				}
-				if (VirtualProtectEx(hProc, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old)) {
-					LOG_INFO("Section %s set as %lX.", (char*)pSectionHeader->Name, newP);
-				}
-				else {
+				if (!VirtualProtectEx(hProc, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old)) {
 					LOG_ERROR("Section %s not set as %lX\n", (char*)pSectionHeader->Name, newP);
 				}
 			}
@@ -381,8 +365,9 @@ void __stdcall Shellcode(MANUAL_MAPPING_DATA* pData) {
 
 int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 	Logger& logger = Logger::getInstance();
-
-	LOG_INFO("Process pid: %d.", pid);
+#ifdef DEBUG
+	LOG_CALL("pid = %lu, dll = %ws", pid, path);
+#endif
 
 	TOKEN_PRIVILEGES priv = { 0 };
 	HANDLE hToken = NULL;
@@ -442,7 +427,6 @@ int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 		LOG_ERROR("Can't allocate dll file.");
 		File.close();
 		CloseHandle(hProc);
-		//system("PAUSE");
 		return -7;
 	}
 
@@ -455,13 +439,11 @@ int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 		delete[] pSrcData;
 		CloseHandle(hProc);
 		LOG_ERROR("Error while mapping.");
-		//system("PAUSE");
 		return -8;
 	}
 	delete[] pSrcData;
 
 	CloseHandle(hProc);
-	// LOG_INFO("OK.");
 
 	return 1;
 }

@@ -11,6 +11,7 @@ public:
   CheatManager(const Process* process, const std::vector<Module*>* attacks);
   void execute() const;
   void AddAttacks(const std::vector<Module*>* attacks);
+  void ClearAttacks();
 public:
   const Process* process_;
   PipeClient* client_;

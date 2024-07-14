@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-Process::Process(const std::wstring& path, const std::vector<std::wstring>& args, const std::wstring& working_directory)
+Process::Process(const std::wstring& path, const std::wstring& args, const std::wstring& working_directory)
   : pid_(0), path_(path), args_(args), working_directory_(working_directory) {
   StartProcess();
 }
@@ -27,10 +27,10 @@ BOOL Process::StartProcess() {
   startup_info.cb = sizeof(startup_info);
   ZeroMemory(&process_info, sizeof(process_info));
 
-  // Construct the command line
   std::wstring command_line = path_;
-  for (const auto& arg : args_) {
-    command_line += L" " + arg;
+  
+  if (!args_.empty()) {
+    command_line += args_;
   }
 
   // Convert std::wstring to LPWSTR

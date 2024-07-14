@@ -7,19 +7,26 @@
 #include <cstdarg>
 #include <vector>
 #include <iostream>
+#include <string>
+#include <locale>
+#include <codecvt>
 
 namespace utilities {
   DWORD GetThreadIDFromWindow(HWND hwnd);
+
   HWND FindWindowByPID(DWORD pid);
+
   DWORD GetMainThreadId(DWORD dwProcessId);
+
   DWORD GetPIDByName(const std::wstring& name);
+
   HANDLE GetHandleByName(const std::wstring& name, BOOL inherit_handle, DWORD desired_access);
+
   uintptr_t GetModuleBaseAddress(DWORD pid, const wchar_t* moduleName);
 
-  // pe utilities
-  PIMAGE_EXPORT_DIRECTORY GetExportDirectory(HMODULE module);
-  PIMAGE_IMPORT_DESCRIPTOR GetImportDescriptor(HMODULE module);
-  PIMAGE_NT_HEADERS GetNTHeaders(HMODULE module);
+  std::wstring string_to_wstring(const std::string& str);
+
+  std::wstring GetExecutableName(const std::wstring& full_path);
 
   template<typename ... Args>
   std::string string_format(const std::string& format, Args ... args) {

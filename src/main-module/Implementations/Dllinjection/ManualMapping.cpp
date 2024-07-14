@@ -434,7 +434,6 @@ int ManualMappingInjection(DWORD pid, const std::wstring& path) {
 	File.read((char*)(pSrcData), FileSize);
 	File.close();
 
-	printf("Mapping...\n");
 	if (!ManualMapDll(hProc, pSrcData, FileSize)) {
 		delete[] pSrcData;
 		CloseHandle(hProc);

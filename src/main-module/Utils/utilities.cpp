@@ -126,21 +126,20 @@ namespace utilities {
     return OpenProcess(GetPIDByName(name), inherit_handle, desired_access);
   }
 
-  PIMAGE_NT_HEADERS GetNTHeaders(HMODULE module) {
-    PIMAGE_DOS_HEADER dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>(module);
-    PIMAGE_NT_HEADERS nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS>((LPBYTE)module + dos_header->e_lfanew);
-    return nt_headers;
+  // extracts and returns the substring after the last backslash
+  std::wstring GetExecutableName(const std::wstring& full_path) {
+    size_t lastBackslash = full_path.find_last_of(L"\\");
+
+    if (lastBackslash != std::wstring::npos) {
+      return full_path.substr(lastBackslash + 1);
+    }
+    else {
+      return full_path;
+    }
   }
 
-  PIMAGE_IMPORT_DESCRIPTOR GetImportDescriptor(HMODULE module) {
-    PIMAGE_NT_HEADERS nt_headers = GetNTHeaders(module);
-    PIMAGE_IMPORT_DESCRIPTOR import_descriptor = PIMAGE_IMPORT_DESCRIPTOR((LPBYTE)module + nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
-    return import_descriptor;
-  }
-
-  PIMAGE_EXPORT_DIRECTORY GetExportDirectory(HMODULE module) {
-    PIMAGE_NT_HEADERS nt_headers = GetNTHeaders(module);
-    PIMAGE_EXPORT_DIRECTORY export_directory = PIMAGE_EXPORT_DIRECTORY((LPBYTE)module + nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-    return export_directory;
+  std::wstring string_to_wstring(const std::string& str) {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    return converter.from_bytes(str);
   }
 }

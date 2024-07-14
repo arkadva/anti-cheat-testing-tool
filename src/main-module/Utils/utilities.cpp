@@ -2,6 +2,14 @@
 #include <tlhelp32.h>
 #include "utilities.h"
 
+#if defined(_WIN64)
+#define CONTEXT_ARCH CONTEXT
+#define OFFSET_OF(member) offsetof(CONTEXT_ARCH, member)
+#else
+#define CONTEXT_ARCH WOW64_CONTEXT
+#define OFFSET_OF(member) offsetof(CONTEXT_ARCH, member)
+#endif
+
 struct EnumWindowsParams {
   DWORD pid;
   HWND hwnd;
@@ -135,6 +143,58 @@ namespace utilities {
     }
     else {
       return full_path;
+    }
+  }
+
+  UINT GetContextOffset(std::string reg) {
+    static const std::map<std::string, UINT> offsets = {
+#if defined(_WIN64)
+        {"Dr0", OFFSET_OF(Dr0)},
+        {"Dr1", OFFSET_OF(Dr1)},
+        {"Dr2", OFFSET_OF(Dr2)},
+        {"Dr3", OFFSET_OF(Dr3)},
+        {"Dr6", OFFSET_OF(Dr6)},
+        {"Dr7", OFFSET_OF(Dr7)},
+        {"Rax", OFFSET_OF(Rax)},
+        {"Rcx", OFFSET_OF(Rcx)},
+        {"Rdx", OFFSET_OF(Rdx)},
+        {"Rbx", OFFSET_OF(Rbx)},
+        {"Rsp", OFFSET_OF(Rsp)},
+        {"Rbp", OFFSET_OF(Rbp)},
+        {"Rsi", OFFSET_OF(Rsi)},
+        {"Rdi", OFFSET_OF(Rdi)},
+        {"R8", OFFSET_OF(R8)},
+        {"R9", OFFSET_OF(R9)},
+        {"R10", OFFSET_OF(R10)},
+        {"R11", OFFSET_OF(R11)},
+        {"R12", OFFSET_OF(R12)},
+        {"R13", OFFSET_OF(R13)},
+        {"R14", OFFSET_OF(R14)},
+        {"R15", OFFSET_OF(R15)}
+#else
+        {"Dr0", OFFSET_OF(Dr0)},
+        {"Dr1", OFFSET_OF(Dr1)},
+        {"Dr2", OFFSET_OF(Dr2)},
+        {"Dr3", OFFSET_OF(Dr3)},
+        {"Dr6", OFFSET_OF(Dr6)},
+        {"Dr7", OFFSET_OF(Dr7)},
+        {"Eax", OFFSET_OF(Eax)},
+        {"Ecx", OFFSET_OF(Ecx)},
+        {"Edx", OFFSET_OF(Edx)},
+        {"Ebx", OFFSET_OF(Ebx)},
+        {"Esp", OFFSET_OF(Esp)},
+        {"Ebp", OFFSET_OF(Ebp)},
+        {"Esi", OFFSET_OF(Esi)},
+        {"Edi", OFFSET_OF(Edi)}
+#endif
+    };
+
+    auto it = offsets.find(reg);
+    if (it != offsets.end()) {
+      return it->second;
+    }
+    else {
+      return -1;
     }
   }
 

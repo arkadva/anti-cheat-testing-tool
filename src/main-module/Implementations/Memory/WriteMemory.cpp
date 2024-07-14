@@ -32,7 +32,7 @@ BOOL NTWVM(HANDLE process, PVOID address, PVOID buffer, ULONG size, PULONG writt
   return NT_SUCCESS(status);
 }
 
-BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
+BOOL WriteImp(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
   Logger& logger = Logger::getInstance();
 
 #ifdef DEBUG

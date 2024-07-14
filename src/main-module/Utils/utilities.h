@@ -10,6 +10,7 @@
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <map>
 
 namespace utilities {
   DWORD GetThreadIDFromWindow(HWND hwnd);
@@ -27,6 +28,8 @@ namespace utilities {
   std::wstring string_to_wstring(const std::string& str);
 
   std::wstring GetExecutableName(const std::wstring& full_path);
+
+  UINT GetContextOffset(std::string reg);
 
   template<typename ... Args>
   std::string string_format(const std::string& format, Args ... args) {

@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <string>
+#include "../Base/variable.h"
 
 struct BreakpointHookData {
   void* address;
@@ -11,6 +12,18 @@ struct BreakpointHookData {
 
 struct ContextChangeEntry {
   void* value;
+  int offset;
+};
+
+// resolves to BreakpointHookData before execution
+struct _BreakpointHookData {
+  Variable* address;
+  int entriesSize;
+};
+
+// resolves to ContextChangeEntry before execution
+struct _ContextChangeEntry {
+  Variable* value;
   int offset;
 };
 

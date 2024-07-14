@@ -6,8 +6,8 @@
 #include <yaml-cpp/yaml.h>
 #include <Windows.h>
 #include <iostream>
-#include "../Base/modulefactory.h"
 #include "../Utils/logger.h"
+#include "../Base/module.h"
 
 struct ProcessStartupInfo {
   std::wstring name;
@@ -24,9 +24,19 @@ YAML::Node InitializeConfig();
 
 ProcessStartupInfo GetProcessStartupInfo(YAML::Node config);
 
+template<typename T>
+Variable* InterpretVariable(std::string variable);
+
+template<typename T>
+static std::vector<Variable*> InterpretList(const YAML::Node& node);
+
+template<typename T>
+Module* InterpretModule(YAML::Node config);
+std::vector<Module*> GetModules(YAML::Node config);
+
 // log settings
 LogTypeInfo GetLogSettings(YAML::Node config);
 UINT CalculateLogSettings(YAML::Node config);
-std::vector<Module*> ParseAttacks(YAML::Node config);
+UINT GetModuleCount(YAML::Node config);
 
 #endif

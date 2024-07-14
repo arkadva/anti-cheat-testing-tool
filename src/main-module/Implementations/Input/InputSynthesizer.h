@@ -2,7 +2,7 @@
 #define INPUTSYNTHESIZER_H_
 
 #include <Windows.h>
-#include "../../Base/Modules/module.h"
+#include "../../Base/module.h"
 #include "../../Utils/utilities.h"
 
 struct InputSynthesizerInformation {

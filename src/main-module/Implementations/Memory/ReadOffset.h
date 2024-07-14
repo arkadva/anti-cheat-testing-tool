@@ -3,26 +3,41 @@
 
 #include <Windows.h>
 #include <iostream>
-#include "../../Base/Modules/memoryaccess.h"
+#include "../../Base/module.h"
+#include "../../Base/memoryaccess.h"
 
 BOOL ReadOffsetImp(DWORD pid, PVOID address, PVOID buffer, BYTE type, std::vector<uintptr_t> offsets);
 
-class ReadOffset : public MemoryAccess {
+class ReadOffset : public Module {
 public:
-  ReadOffset(LPVOID address, void* buffer, ReadMemoryType type, std::vector<uintptr_t> offsets)
-    : MemoryAccess(address), buffer_(buffer), type_(type), offsets_(offsets) {
+  ReadOffset(Variable* address, Variable* buffer, Variable* type, std::vector<Variable*> offsets)
+  : address_(address), buffer_(buffer), type_(type), offsets_(offsets) {
     module_name = "Read Memory Offset";
   }
 
   virtual bool execute(const Process* process) const override {
-    BOOL status = ReadOffsetImp(process->GetPid(), address_, buffer_, type_, offsets_);
+    std::vector<uintptr_t> interpreted_offsets;
+
+    for (const auto& offset : offsets_) {
+      interpreted_offsets.push_back(offset->as<uintptr_t>());
+    }
+
+    BOOL status = ReadOffsetImp(
+      process->GetPid(),
+      address_->as<PVOID>(),
+      buffer_->variable_,
+      type_->as<BYTE>(),
+      interpreted_offsets
+    );
+
     return status;
   }
 
 private:
-  void* buffer_;
-  const ReadMemoryType type_;
-  std::vector<uintptr_t> offsets_;
+  Variable* address_;
+  Variable* buffer_;
+  Variable* type_;
+  std::vector<Variable*> offsets_;
 };
 
 #endif

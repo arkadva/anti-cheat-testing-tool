@@ -3,25 +3,34 @@
 
 #include <Windows.h>
 #include <iostream>
-#include "../../Base/Modules/memoryaccess.h"
+#include "../../Base/module.h"
+#include "../../Base/memoryaccess.h"
 
-BOOL Write(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
+BOOL WriteImp(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
-class WriteMemory : public MemoryAccess {
+class WriteMemory : public Module {
 public:
-  WriteMemory(LPVOID address, void* buffer, ULONG size, BYTE type)
-    : MemoryAccess(address), buffer_(buffer), size_(size), type_(type) {
+  WriteMemory(Variable* address, Variable* buffer, Variable* size, Variable* type) 
+  : address_(address), buffer_(buffer), size_(size), type_(type) {
     module_name = "Write Memory";
   }
 
   virtual bool execute(const Process* process) const override {
-    BOOL status = Write(process->GetPid(), address_, buffer_, size_, type_);
+    BOOL status = WriteImp(
+      process->GetPid(),
+      address_->as<PVOID>(),
+      buffer_->variable_,
+      size_->as<ULONG>(),
+      type_->as<BYTE>()
+    );
+
     return status;
   }
 
 private:
-  void* buffer_;
-  const ULONG size_;
-  const BYTE type_;
+  Variable* address_;
+  Variable* buffer_;
+  Variable* size_;
+  Variable* type_;
 };
 #endif

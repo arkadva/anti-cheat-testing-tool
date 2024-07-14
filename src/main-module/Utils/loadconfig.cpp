@@ -1,5 +1,7 @@
 #include "loadconfig.h"
-#include "../Base/Modules/module.h"
+#include "../Base/module.h"
+#include "../Base/cheatmanager.h"
+#include "../Utils/implementation_imports.h"
 
 YAML::Node InitializeConfig() {
   YAML::Node config = YAML::LoadFile("D:\\Programming\\anti-cheat-testing-tool\\Release\\config.yaml");
@@ -97,22 +99,262 @@ UINT CalculateLogSettings(YAML::Node config) {
   return logmask;
 }
 
-std::vector<Module*> ParseAttacks(YAML::Node config) {
-  std::vector<Module*> modules;
+UINT GetModuleCount(YAML::Node config) {
+  BYTE attack_index = 0;
 
   if (config["attacks"]) {
     YAML::Node attacks = config["attacks"];
 
-    BYTE attack_index = 0;
-
     while (attack_index < UCHAR_MAX) {
       if (attacks[std::to_string(attack_index)]) {
-        YAML::Node attack = attacks[std::to_string(attack_index)];
-        modules.push_back(ModuleFactory::CreateAttack(attack["name"].as<std::string>(), attack["variables"]));
+        attack_index += 1;
       }
-
-      attack_index += 1;
+      else {
+        break;
+      }
     }
+  }
+
+  return attack_index;
+}
+
+template<typename T>
+static std::vector<Variable*> InterpretList(const YAML::Node& node) {
+  std::vector<Variable*> values;
+
+  for (const auto& value : node) {
+    values.push_back(InterpretVariable<T>(value.as<std::string>()));
+  }
+
+  return values;
+}
+
+template<typename T>
+Variable* InterpretVariable(std::string variable) {
+  if (variable.empty()) {
+    return nullptr;
+  }
+
+  bool isNumber = true;
+  for (char c : variable) {
+    if (!isdigit(c)) {
+      isNumber = false;
+      break;
+    }
+  }
+  if (isNumber) {
+    long value = std::stol(variable);
+    return new Variable(value);
+  }
+
+  if (variable.length() > 2 && variable[0] == '0' && (variable[1] == 'x' || variable[1] == 'X')) {
+    std::istringstream iss(variable);
+    T value;
+    iss >> std::hex >> value;
+
+    if (!iss.fail()) {
+      return new Variable(value);
+    }
+  }
+
+  if (isalpha(variable[0])) {
+    return Variable::GetVariable<T>(variable);
+  }
+
+  return nullptr;
+}
+
+Module* InterpretModule(YAML::Node attack) {
+  if (!attack["name"]) return nullptr;
+  if (!attack["variables"]) return nullptr;
+
+
+  std::string attack_name = attack["name"].as<std::string>();
+  YAML::Node variables = attack["variables"];
+
+  //
+  // ===============> MEMORY MODULES START
+  //
+  if (attack_name == "ReadOffset") {
+    Variable* address = nullptr; Variable* buffer = nullptr; std::vector<Variable*> offsets;
+
+    if (variables["address"]) {
+      address = InterpretVariable<PVOID>(variables["address"].as<std::string>());
+    }
+
+    if (variables["save_to"]) {
+      buffer = InterpretVariable<PVOID>(variables["save_to"].as<std::string>());
+    }
+
+    if (variables["offsets"]) {
+      offsets = InterpretList<uintptr_t>(variables["offsets"]);
+    }
+
+    return new ReadOffset(address, buffer, new Variable(kReadProcessMemory), offsets);
+  }
+
+  if (attack_name == "ReadMemory") {
+    Variable* address = nullptr; Variable* buffer = nullptr; size_t num_byters = 4;
+
+    if (variables["address"]) {
+      address = InterpretVariable<PVOID>(variables["address"].as<std::string>());
+    }
+
+    if (variables["save_to"]) {
+      buffer = InterpretVariable<PVOID>(variables["save_to"].as<std::string>());
+    }
+
+    if (variables["type"]) {
+      num_byters = Variable::GetSizeOfType(variables["type"].as<std::string>());
+    }
+
+    return new ReadMemory(address, buffer, new Variable(num_byters), new Variable(kReadProcessMemory));
+  }
+
+  if (attack_name == "WriteMemory") {
+    Variable* address = nullptr; Variable* value = nullptr; size_t num_byters = 4;
+
+    if (variables["address"]) {
+      address = InterpretVariable<PVOID>(variables["address"].as<std::string>());
+    }
+
+    if (variables["value"]) {
+      value = InterpretVariable<PVOID>(variables["value"].as<std::string>());
+    }
+
+    if (variables["type"]) {
+      num_byters = Variable::GetSizeOfType(variables["type"].as<std::string>());
+    }
+
+    return new WriteMemory(address, value, new Variable(num_byters), new Variable(kReadProcessMemory));
+  }
+  //
+  // ===============> MEMORY MODULES END
+  //
+  
+  //
+  // ===============> DLL MODULES START
+  //
+
+  if (attack_name == "CreateRemoteThreadInjection") {
+    std::wstring path;
+    
+    if (variables["path"]) {
+      path = utilities::string_to_wstring((variables["path"].as<std::string>()));
+    }
+
+    wchar_t* wstr = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (wcslen(path.c_str() + 1))));
+    wcscpy_s(wstr, path.length() + 1, path.c_str());
+
+    return new CreateRemoteThreadInjection(new Variable(wstr), new Variable(kCreateRemoteThread));
+  }
+
+  if (attack_name == "ManualMapping") {
+    std::wstring path;
+
+    if (variables["path"]) {
+      path = utilities::string_to_wstring((variables["path"].as<std::string>()));
+    }
+
+    wchar_t* wstr = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (wcslen(path.c_str() + 1))));
+    wcscpy_s(wstr, path.length() + 1, path.c_str());
+
+    return new ManualMapping(new Variable(wstr));
+  }
+
+  if (attack_name == "WindowsHooksInjection") {
+    std::wstring path;
+
+    if (variables["path"]) {
+      path = utilities::string_to_wstring((variables["path"].as<std::string>()));
+    }
+
+    wchar_t* wstr = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (wcslen(path.c_str() + 1))));
+    wcscpy_s(wstr, path.length() + 1, path.c_str());
+
+    return new WindowsHooksInjection(new Variable(wstr));
+  }
+
+  //
+  // ===============> DLL MODULES END
+  //
+
+  //
+  // ===============> HOOKS MODULES START
+  //
+
+  if (attack_name == "BreakpointHook") {
+    Variable* address;
+
+    _BreakpointHookData entry;
+    std::vector<_ContextChangeEntry> entryVec;
+
+    if (variables["address"]) {
+      address = InterpretVariable<PVOID>(variables["address"].as<std::string>());
+      entry.address = address;
+    }
+
+    if (variables["context"]) {
+      UINT contextIndex = 0;
+
+      while (contextIndex <= UCHAR_MAX) {
+        YAML::Node contextNode = variables["context"];
+
+        if (variables["context"][std::to_string(contextIndex)]) {
+          YAML::Node contextEntry = contextNode[std::to_string(contextIndex)];
+
+          std::string reg; int value = -1;
+
+          if (contextEntry["register"]) {
+            reg = contextEntry["register"].as<std::string>();
+          }
+
+          if (contextEntry["value"]) {
+            value = contextEntry["value"].as<int>();
+          }
+
+          UINT offset = utilities::GetContextOffset(reg);
+
+          _ContextChangeEntry* newEntryData = new _ContextChangeEntry(); //{ reinterpret_cast<void*>(value), offset };
+          newEntryData->value = new Variable(value);
+          newEntryData->offset = offset;
+
+          entryVec.push_back(*newEntryData);
+        }
+        else {
+          break;
+        }
+
+        contextIndex += 1;
+      }
+      
+    }
+
+    entry.entriesSize = entryVec.size();
+    _ContextChangeEntry* entryArr = static_cast<_ContextChangeEntry*>(malloc(sizeof(_ContextChangeEntry) * entryVec.size()));
+    std::copy(entryVec.begin(), entryVec.end(), entryArr);
+
+    return new BreakpointHook(CheatManager::getClient(), entry, entryArr, kPageGuard);
+  }
+
+  //
+  // ===============> HOOKS MODULES END
+  //
+
+  return nullptr;
+}
+
+std::vector<Module*> GetModules(YAML::Node config) {
+  std::vector<Module*> modules;
+
+  BYTE attack_index = 0;
+  UINT attack_count = GetModuleCount(config);
+
+  YAML::Node attacks = config["attacks"];
+
+  for (UINT i = 0; i < attack_count; i++) {
+    YAML::Node attack = attacks[std::to_string(i)];
+    modules.push_back(InterpretModule(attack));
   }
 
   return modules;

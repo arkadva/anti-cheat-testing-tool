@@ -2,6 +2,7 @@
 #include "../../Utils/logger.h"
 #include "../../Utils/utilities.h"
 #include "ReadOffset.h"
+#include <iomanip> 
 
 BOOL ReadOffsetImp(DWORD pid, PVOID address, PVOID buffer, BYTE type, std::vector<uintptr_t> offsets) {
   Logger& logger = Logger::getInstance();

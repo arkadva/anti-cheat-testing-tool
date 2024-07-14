@@ -3,25 +3,34 @@
 
 #include <Windows.h>
 #include <iostream>
-#include "../../Base/Modules/memoryaccess.h"
+#include "../../Base/memoryaccess.h"
+#include "../../Base/module.h"
 
-BOOL Read(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
+BOOL ReadMemoryImp(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type);
 
-class ReadMemory : public MemoryAccess {
+class ReadMemory : public Module {
 public:
-  ReadMemory(LPVOID address, void* buffer, ULONG size, BYTE type)
-    : MemoryAccess(address), buffer_(buffer), size_(size), type_(type) { 
+  ReadMemory(Variable* address, Variable* buffer, Variable* size, Variable* type) 
+  : address_(address), buffer_(buffer), size_(size), type_(type) {
     module_name = "Read Memory";
   }
 
   virtual bool execute(const Process* process) const override {
-    BOOL status = Read(process->GetPid(), address_, buffer_, size_, type_);
+    BOOL status = ReadMemoryImp(
+      process->GetPid(),
+      address_->as<PVOID>(),
+      buffer_->variable_,
+      size_->as<UINT>(),
+      type_->as<BYTE>()
+    );
+    
     return status;
   }
   
 private:
-  void* buffer_;
-  const ULONG size_;
-  const BYTE type_;
+  Variable* address_;
+  Variable* buffer_;
+  Variable* size_;
+  Variable* type_;
 };
 #endif

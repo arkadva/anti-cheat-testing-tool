@@ -2,7 +2,7 @@
 #define CREATEREMOTETHREADINJECTION_H_
 
 #include <iostream>
-#include "../../Base/Modules/dllinjection.h"
+#include "../../Base/module.h"
 #include "../../Utils/utilities.h"
 
 int injectIntoPID(DWORD pid, BYTE method, const wchar_t* dll);
@@ -14,33 +14,36 @@ enum RemoteThreadType {
 	kCreateRemoteThread = 1 << 2
 };
 
-class CreateRemoteThreadInjection : public DLLInjection {
+class CreateRemoteThreadInjection : public Module {
 public:
-  CreateRemoteThreadInjection(const std::wstring& path, BYTE attacks) : DLLInjection(path), _attacks(attacks) {
+  CreateRemoteThreadInjection(Variable* path, Variable* attacks) 
+	: path_(path), attacks_(attacks) {
 		module_name = "CreateRemoteThread DLL injection";
 	}
 
-	// TODO: missing dll unload mechanism
   virtual bool execute(const Process* process) const override {
 		DWORD pid = process->GetPid();
+		DWORD attacks = attacks_->as<DWORD>();
+		wchar_t* path = path_->as<wchar_t*>();
 
-		int result;
+		int result = true;
 
-		if (_attacks & kNtCreateThreadEx) {
-			result = injectIntoPID(pid, 1, path.c_str());
+		if (attacks & kNtCreateThreadEx) {
+			result &= injectIntoPID(pid, 1, path);
 		}
 
-		if (_attacks & kRtlCreateUserThread) {
-			result = injectIntoPID(pid, 2, path.c_str());
+		if (attacks & kRtlCreateUserThread) {
+			result &= injectIntoPID(pid, 2, path);
 		}
 
-		if (_attacks & kCreateRemoteThread) {
-			result = injectIntoPID(pid, 3, path.c_str());
+		if (attacks & kCreateRemoteThread) {
+			result &= injectIntoPID(pid, 3, path);
 		}
 
-    return true;
+		return result;
   }
 private:
-	const BYTE _attacks;
+	Variable* path_;
+	Variable* attacks_;
 };
 #endif

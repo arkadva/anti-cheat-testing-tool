@@ -3,7 +3,7 @@
 #include "../../Utils/utilities.h"
 #include "ReadMemory.h"
 
-BOOL Read(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
+BOOL ReadMemoryImp(DWORD pid, PVOID address, PVOID buffer, ULONG size, BYTE type) {
   Logger& logger = Logger::getInstance();
 
 #ifdef DEBUG

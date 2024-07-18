@@ -13,12 +13,9 @@ DWORD WINAPI PipeServerThread(LPVOID lpParam) {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
   switch (ul_reason_for_call) {
   case DLL_PROCESS_ATTACH:
+    hThread = CreateThread(NULL, 0, PipeServerThread, NULL, 0, NULL);
     MessageBoxA(NULL, "DLL has been loaded!", "Notification", MB_OK | MB_ICONINFORMATION);
     DisableThreadLibraryCalls(hModule);
-
-    //CreatePipeServer();
-    hThread = CreateThread(NULL, 0, PipeServerThread, NULL, 0, NULL);
-
     break;
   case DLL_PROCESS_DETACH:
     if (hThread) {

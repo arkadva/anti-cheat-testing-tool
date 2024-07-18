@@ -31,6 +31,10 @@ namespace utilities {
 
   UINT GetContextOffset(std::string reg);
 
+  char* hexStringToBytes(const std::string& hexString, size_t size);
+
+  int GetMouseEvent(std::string event);
+
   template<typename ... Args>
   std::string string_format(const std::string& format, Args ... args) {
     size_t size = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'

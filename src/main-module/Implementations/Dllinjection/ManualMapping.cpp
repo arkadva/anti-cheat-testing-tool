@@ -152,8 +152,8 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 	}
 
 #ifdef DEBUG
-	LOG_INFO("My shellcode pointer %p\n", Shellcode);
-	LOG_INFO("Target point %p\n", pShellcode);
+	LOG_INFO("My shellcode pointer %p", Shellcode);
+	LOG_INFO("Target point %p", pShellcode);
 #endif
 
 	HANDLE hThread = CreateRemoteThread(hProc, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(pShellcode), MappingDataAlloc, 0, nullptr);
@@ -238,7 +238,7 @@ bool ManualMapDll(HANDLE hProc, BYTE* pSrcData, SIZE_T FileSize, bool ClearHeade
 					newP = PAGE_EXECUTE_READ;
 				}
 				if (!VirtualProtectEx(hProc, pTargetBase + pSectionHeader->VirtualAddress, pSectionHeader->Misc.VirtualSize, newP, &old)) {
-					LOG_ERROR("Section %s not set as %lX\n", (char*)pSectionHeader->Name, newP);
+					LOG_ERROR("Section %s not set as %lX", (char*)pSectionHeader->Name, newP);
 				}
 			}
 		}

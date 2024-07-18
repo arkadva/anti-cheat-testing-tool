@@ -40,6 +40,8 @@ int main() {
       LOG_CONFIRMATION("End");
     }
   }
+
+  //std::cout << Variable::GetVariable<uint32_t>("health")->as<uint32_t>() << std::endl;
   
-  Variable::PrintVariables();
+  //Variable::PrintVariables();
 }

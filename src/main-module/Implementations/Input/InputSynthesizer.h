@@ -7,9 +7,8 @@
 
 struct InputSynthesizerInformation {
   INPUT* input;
-  UINT inputCount;
-  LONG x;
-  LONG y;
+  Variable* x;
+  Variable* y;
 };
 
 enum InputSynthesizerType {

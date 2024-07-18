@@ -8,7 +8,6 @@ std::map<std::string, std::function<BOOL(BYTE* buffer)>> functionMap;
 void InitializeFunctionMap() {
   functionMap["PageGuardHook"] = PageGuardHook_wrapper;
   functionMap["HardwareHook"] = HardwareHook_wrapper;
-  functionMap["IATHook"] = IATHook_wrapper;
 }
 
 BOOL HandleRequest(const std::string& intent, BYTE* buffer) {
@@ -33,12 +32,5 @@ BOOL HardwareHook_wrapper(BYTE* buffer) {
   ContextChangeEntry* entryList = reinterpret_cast<ContextChangeEntry*>(buffer + sizeof(BreakpointHookData));
 
   HardwareHook(hookData, entryList);
-  return TRUE;
-}
-
-BOOL IATHook_wrapper(BYTE* buffer) {
-  MessageBoxA(NULL, "IATHook", "Tesst", NULL);
-
-  IATHook();
   return TRUE;
 }

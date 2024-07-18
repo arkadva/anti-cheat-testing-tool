@@ -8,7 +8,6 @@
 #include <functional>
 #include "PageGuardHook.h"
 #include "HardwareHook.h"
-#include "IATHook.h"
 
 extern std::map<std::string, std::function<BOOL(BYTE* buffer)>> functionMap;
 
@@ -19,5 +18,4 @@ BOOL HandleRequest(const std::string& intent, BYTE* buffer);
 // hooks
 BOOL PageGuardHook_wrapper(BYTE* buffer);
 BOOL HardwareHook_wrapper(BYTE* buffer);
-BOOL IATHook_wrapper(BYTE* buffer);
 #endif

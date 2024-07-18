@@ -4,25 +4,29 @@
 #include "../../Base/module.h"
 #include "../../Base/memoryaccess.h"
 
-BOOL WriteAndExec(DWORD pid, LPVOID address, LPCSTR shellcode, SIZE_T size);
+BOOL WriteAndExec(DWORD pid, LPCSTR shellcode, SIZE_T size);
 
 class ExecHeap : public Module {
 public:
-	ExecHeap(LPVOID address, const std::vector<char>& shellcode) {
+	ExecHeap(Variable* shellcode, size_t size) 
+	: shellcode_(shellcode), size_(size) {
 		module_name = "Execute Heap";
 	}
 
 	virtual bool execute(const Process* process) const override {
-		/*
-		BOOL result = WriteAndExec(process->GetPid(), address_, shellcode_.data(), shellcode_.size());
-		*/
-		BOOL result = TRUE;
-		return result;
+		char* byte_array = shellcode_->as<char*>();
+		int size = strlen(byte_array);
+
+		std::vector<char> shellcode;
+		shellcode.assign(byte_array, byte_array + size);
+
+		BOOL result = WriteAndExec(process->GetPid(), shellcode.data(), shellcode.size());
+
+		return TRUE;
 	}
 
 private:
-/*
-	const std::vector<char>& shellcode_;
-*/
+	Variable* shellcode_;
+	size_t size_;
 };
 #endif

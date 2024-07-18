@@ -1,16 +1,12 @@
-#include "InputSynthesizer.h"
+ #include "InputSynthesizer.h"
 
-BOOL KeyboardEvent(INPUT* input, UINT count) {
-  for (UINT i = 0; i < count; i++) {
-    keybd_event(input[i].ki.wVk, input[i].ki.wScan, input[i].ki.dwFlags, input[i].ki.time);
-  }
+BOOL KeyboardEvent(INPUT* input) {
+  keybd_event(input->ki.wVk, input->ki.wScan, input->ki.dwFlags, input->ki.time);
   return TRUE;
 }
 
-BOOL MouseEvent(INPUT* input, UINT count) {
-  for (UINT i = 0; i < count; ++i) {
-    mouse_event(input[i].mi.dwFlags, input[i].mi.dx, input[i].mi.dy, input[i].mi.mouseData, input[i].mi.time);
-  }
+BOOL MouseEvent(INPUT* input) {
+  mouse_event(input->mi.dwFlags, input->mi.dx, input->mi.dy, input->mi.mouseData, input->mi.time);
   return TRUE;
 }
 
@@ -30,19 +26,19 @@ bool InputSynthesizer::execute(const Process* process) const {
   BOOL status = TRUE;
 
   if (type_ & kSetCursor) {
-    status &= SetCursorPos(isi_->x, isi_->y);
+    status &= SetCursorPos(isi_->x->as<LONG>(), isi_->y->as<LONG>());
   }
 
   if (type_ & kSendInput) {
-    status &= (SendInput(isi_->inputCount, isi_->input, sizeof(INPUT) == isi_->inputCount));
+    status &= (SendInput(1, isi_->input, sizeof(INPUT) == 1));
   }
 
   if (type_ & kMouseEvent) {
-    status &= MouseEvent(isi_->input, isi_->inputCount);
+    status &= MouseEvent(isi_->input);
   }
 
   if (type_ & kKeyboardEvent) {
-    status &= KeyboardEvent(isi_->input, isi_->inputCount);
+    status &= KeyboardEvent(isi_->input);
   }
 
   return status;

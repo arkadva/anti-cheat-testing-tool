@@ -202,4 +202,55 @@ namespace utilities {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(str);
   }
+
+  char* hexStringToBytes(const std::string& hexString, size_t size) {
+    size_t numBytes = size; //hexString.length() / 4;
+
+    char* byteArray = new char[numBytes];
+    size_t byteIndex = 0;
+
+    for (size_t i = 0; i < hexString.length(); i += 4) {
+      std::string byteString = hexString.substr(i + 2, 2);
+
+      char byte = static_cast<char>(std::stoi(byteString, nullptr, 16));
+
+      byteArray[byteIndex++] = byte;
+    }
+
+    return byteArray;
+  }
+
+  int GetMouseEvent(std::string eventStr) {
+    int mouse_event = 0;
+
+    if (eventStr == "MOUSEEVENTF_LEFTDOWN") {
+      mouse_event = MOUSEEVENTF_LEFTDOWN;
+    }
+    else if (eventStr == "MOUSEEVENTF_LEFTUP") {
+      mouse_event = MOUSEEVENTF_LEFTUP;
+    }
+    else if (eventStr == "MOUSEEVENTF_RIGHTDOWN") {
+      mouse_event = MOUSEEVENTF_RIGHTDOWN;
+    }
+    else if (eventStr == "MOUSEEVENTF_RIGHTUP") {
+      mouse_event = MOUSEEVENTF_RIGHTUP;
+    }
+    else if (eventStr == "MOUSEEVENTF_MIDDLEDOWN") {
+      mouse_event = MOUSEEVENTF_MIDDLEDOWN;
+    }
+    else if (eventStr == "MOUSEEVENTF_MIDDLEUP") {
+      mouse_event = MOUSEEVENTF_MIDDLEUP;
+    }
+    else if (eventStr == "MOUSEEVENTF_XDOWN") {
+      mouse_event = MOUSEEVENTF_XDOWN;
+    }
+    else if (eventStr == "MOUSEEVENTF_XUP") {
+      mouse_event = MOUSEEVENTF_XUP;
+    }
+    else {
+      mouse_event = -1;
+    }
+
+    return mouse_event;
+  }
 }

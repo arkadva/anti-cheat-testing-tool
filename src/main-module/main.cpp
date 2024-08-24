@@ -14,10 +14,9 @@ int main() {
   YAML::Node config = InitializeConfig();
   // extract startup info
   ProcessStartupInfo psi = GetProcessStartupInfo(config);
-  // extract the log settings
-  LogTypeInfo lti = GetLogSettings(config);
+  // LogTypeInfo lti = GetLogSettings(config);
 
-  Logger& logger = Logger::getInstance(lti.display_mask, lti.save_mask);
+  Logger& logger = Logger::getInstance();
   Process* process = new Process(psi.name, psi.args, psi.working_directory);
   CheatManager* cheatManager = new CheatManager(process);
 
@@ -40,8 +39,4 @@ int main() {
       LOG_CONFIRMATION("End");
     }
   }
-
-  //std::cout << Variable::GetVariable<uint32_t>("health")->as<uint32_t>() << std::endl;
-  
-  //Variable::PrintVariables();
 }

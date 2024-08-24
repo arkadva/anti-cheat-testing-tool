@@ -367,6 +367,7 @@ Module* InterpretModule(YAML::Node attack) {
 
   if (attack_name == "CreateRemoteThreadInjection") {
     std::wstring path;
+    Variable* method = new Variable(kCreateRemoteThread);
 
     if (variables["path"]) {
       path = utilities::string_to_wstring(variables["path"].as<std::string>());
@@ -374,6 +375,26 @@ Module* InterpretModule(YAML::Node attack) {
     else {
       LOG_ERROR("CreateRemoteThreadInjection module is missing the `path` argument. Aborting.");
       return nullptr;
+    }
+
+    if (variables["method"]) {
+      std::string methodStr = variables["method"].as<std::string>();
+
+      if (methodStr == "NtCreateThreadEx") {
+        method->Set<int>(kNtCreateThreadEx);
+      }
+      else if (methodStr == "RtlCreateUserThread") {
+        method->Set<int>(kRtlCreateUserThread);
+      }
+      else if (methodStr == "CreateRemoteThread") {
+        method->Set<int>(kCreateRemoteThread);
+      }
+      else {
+        LOG_WARN("`%s` is not a valid method for the CreateRemoteThreadInjection module. Defaulting to `CreateRemoteThread`.", methodStr.c_str());
+      }
+    }
+    else {
+      LOG_WARN("CreateRemoteThreadInjection module is missing the `method` argument. Defaulting to `CreateRemoteThread`.");
     }
 
     wchar_t* wstr = static_cast<wchar_t*>(malloc(sizeof(wchar_t) * (path.length() + 1)));
@@ -384,7 +405,7 @@ Module* InterpretModule(YAML::Node attack) {
 
     wcscpy_s(wstr, path.length() + 1, path.c_str());
 
-    return new CreateRemoteThreadInjection(new Variable(wstr), new Variable(kCreateRemoteThread));
+    return new CreateRemoteThreadInjection(new Variable(wstr), method);
   }
 
   if (attack_name == "ManualMapping") {

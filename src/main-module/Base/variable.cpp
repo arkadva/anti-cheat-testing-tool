@@ -36,7 +36,7 @@ void Variable::PrintVariables() {
       std::cout << *static_cast<uint64_t*>(var.second->variable_);
     }
     else {
-      std::cout << "Unknown type";
+      std::cout << "Unknown type: " << var.second->variable_type_.name();
     }
     std::cout << std::endl;
   }

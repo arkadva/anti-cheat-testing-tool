@@ -9,9 +9,15 @@
 #include "./Base/variable.h"
 #include <cstdint>
 
-int main() {
+int main(int argc, char** argv) {
+  std::string config_name = "config.yaml";
+
+  if (argc >= 2) {
+    config_name = argv[1];
+  }
+
   ////// SETUP START
-  YAML::Node config = InitializeConfig();
+  YAML::Node config = InitializeConfig(config_name);
   // extract startup info
   ProcessStartupInfo psi = GetProcessStartupInfo(config);
   // LogTypeInfo lti = GetLogSettings(config);

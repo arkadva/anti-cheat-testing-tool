@@ -20,7 +20,7 @@ struct LogTypeInfo {
   UINT display_mask = 0;
 };
 
-YAML::Node InitializeConfig();
+YAML::Node InitializeConfig(std::string);
 
 ProcessStartupInfo GetProcessStartupInfo(YAML::Node config);
 

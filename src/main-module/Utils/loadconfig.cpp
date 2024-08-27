@@ -3,8 +3,19 @@
 #include "../Base/cheatmanager.h"
 #include "../Utils/implementation_imports.h"
 
-YAML::Node InitializeConfig() {
-  YAML::Node config = YAML::LoadFile("D:\\Programming\\anti-cheat-testing-tool\\Release\\config.yaml");
+YAML::Node InitializeConfig(std::string config_name) {
+  YAML::Node config;
+  std::cout << "Attempting to load config file " << config_name << std::endl;
+
+  try {
+    config = YAML::LoadFile(config_name);
+  }
+  catch (...) {
+    std::cout << "Failed to load the provided file. Please make sure the specified file exists and is a valid YAML format" << std::endl;
+    getchar();
+    exit(1);
+  }
+
   std::cout << "Loaded config file" << std::endl;
   return config;
 }
